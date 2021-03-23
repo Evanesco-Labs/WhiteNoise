@@ -1,0 +1,29 @@
+syntax = "proto3";
+package pb;
+
+message command {
+  string commandId = 1;
+  cmdtype  type = 2;
+  string from = 3; //sender peerId
+  bytes data = 4;
+}
+
+enum cmdtype {
+  SessionExPend = 0;
+  Disconnect = 1;
+}
+
+message sessionExpend {
+  string sessionId = 1;
+  string peerId = 2;
+}
+
+message ack {
+  string commandId = 1;
+  bool result = 2;
+  bytes data = 3;
+}
+
+message disconnectCmd {
+  string sessionId = 1;
+}

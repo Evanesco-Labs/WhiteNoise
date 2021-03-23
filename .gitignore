@@ -1,0 +1,6 @@
+.idea/
+main
+cmd/cmd
+cmd/db
+*.log
+*.sh

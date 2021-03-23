@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package main;
+
+service Rpc {
+  rpc GenSessiontoPeer(genSessionCmd) returns (res) {}
+  rpc RegisterProxy(regProxyCmd) returns(res) {}
+  rpc ExtendSession(extendCmd) returns(res) {}
+  rpc SendRelayMsg(relayMsg) returns(res) {}
+  rpc GenCircuit(genCircuitCmd) returns(res) {}
+  rpc GossipJoint(gossipMsg) returns(res) {}
+}
+
+message genSessionCmd {
+  string peerId = 1;
+  string sessionId = 2;
+  int32 myRole = 3;
+  int32 otherRole = 4;
+}
+
+message regProxyCmd{
+  string peerId = 1;
+}
+
+message extendCmd {
+  string relay = 1;
+  string joint = 2;
+  string sessionId = 3;
+}
+
+message relayMsg {
+  string sessionID = 1;
+  bytes msg = 2;
+}
+
+message genCircuitCmd {
+  string des = 1;
+  string sessionId = 2;
+}
+
+message gossipMsg {
+  string desHash = 1;
+  string join = 2;
+  string sessionId = 3;
+}
+
+message res {
+  bool ok = 1;
+  bytes data = 2;
+}
+

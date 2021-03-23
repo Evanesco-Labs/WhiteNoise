@@ -1,0 +1,7 @@
+syntax = "proto3";
+package pb;
+
+message peerInfo {
+  string peerId = 1;
+  string multiaddress = 2;
+}
