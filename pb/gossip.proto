@@ -1,0 +1,16 @@
+syntax = "proto3";
+package pb;
+
+message negotiate {
+  string id = 1;
+  string join = 2; //join at this peerid
+  string sessionId = 3;
+  string destination = 4;
+  bytes sig = 5;
+}
+
+//message detail {
+//  string join = 1;
+//  string sessionId = 2;
+//  bytes sig = 3;
+//}
