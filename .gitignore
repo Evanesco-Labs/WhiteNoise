@@ -2,3 +2,5 @@
 *.log
 *.sh
 vendor/
+Log/
+db/
