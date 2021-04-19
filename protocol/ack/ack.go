@@ -12,7 +12,7 @@ import (
 	"whitenoise/network/session"
 )
 
-const ACK_PROTOCOL string = "ack"
+const ACK_PROTOCOL string = "/ack"
 
 type AckManager struct {
 	context  context.Context
