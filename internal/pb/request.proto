@@ -1,0 +1,57 @@
+syntax = "proto3";
+package pb;
+
+message request {
+  string reqId = 1;
+  string from = 2;
+  reqtype reqtype = 3;
+  bytes data = 4;
+}
+
+enum reqtype {
+  GetOnlineNodes = 0;
+  NewProxy = 1;
+  NewCircuit = 2;
+  DecryptGossip = 3;
+  NegPlainText = 4;
+  UnRegisterType = 5;
+  MainNetPeers = 6;
+}
+
+message newCircuit {
+  string from = 1;
+  string to = 2;
+  string sessionId = 3;
+}
+
+message newProxy {
+  string time = 1;
+  string whiteNoiseID = 2;
+}
+
+message decrypt{
+  string destination = 1;
+  bytes cypher = 2;
+}
+
+message unRegister{
+  repeated string sessionID = 1;
+}
+
+message negPlaintext{
+  string sessionId = 1;
+  bytes neg = 2;
+}
+
+message mainNetPeers{
+  int32 max = 1;
+}
+
+message peersList{
+  repeated nodeInfo peers = 1;
+}
+
+message nodeInfo{
+  string id = 1;
+  repeated string addr = 2;
+}
