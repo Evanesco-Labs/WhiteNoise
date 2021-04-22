@@ -3,11 +3,11 @@ package secure
 import (
 	"context"
 	"github.com/flynn/noise"
-	"net"
 	"sync"
 	"time"
 	"whitenoise/common"
 	"whitenoise/common/account"
+	"whitenoise/protocol/relay"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -23,7 +23,7 @@ type SecureSession struct {
 
 	readLock  sync.Mutex
 	writeLock sync.Mutex
-	insecure  net.Conn
+	insecure  relay.InsecureConn
 
 	qseek int     // queued bytes seek value.
 	qbuf  []byte  // queued bytes buffer.
@@ -35,7 +35,7 @@ type SecureSession struct {
 	readHandshakeMsgTimeout time.Duration
 }
 
-func NewSecureSession(localID peer.ID, privateKey crypto.PrivKey, ctx context.Context, insecure net.Conn, remote peer.ID, initiator bool) (*SecureSession, error) {
+func NewSecureSession(localID peer.ID, privateKey crypto.PrivKey, ctx context.Context, insecure relay.InsecureConn, remote peer.ID, initiator bool) (*SecureSession, error) {
 	s := &SecureSession{
 		insecure:                insecure,
 		initiator:               initiator,
@@ -65,10 +65,6 @@ func NewSecureSession(localID peer.ID, privateKey crypto.PrivKey, ctx context.Co
 	}
 }
 
-func (s *SecureSession) LocalAddr() net.Addr {
-	return s.insecure.LocalAddr()
-}
-
 func (s *SecureSession) LocalPeer() peer.ID {
 	return s.localID
 }
@@ -81,16 +77,12 @@ func (s *SecureSession) LocalPublicKey() crypto.PubKey {
 	return s.localKey.GetPublic()
 }
 
-func (s *SecureSession) LocalWhitenoiseID() string {
+func (s *SecureSession) LocalWhiteNoiseID() string {
 	whitenoiseID, err := account.WhitenoiseIDFromP2PPK(s.localKey.GetPublic())
 	if err != nil {
 		return ""
 	}
 	return whitenoiseID.String()
-}
-
-func (s *SecureSession) RemoteAddr() net.Addr {
-	return s.insecure.RemoteAddr()
 }
 
 func (s *SecureSession) RemotePeer() peer.ID {
@@ -101,24 +93,12 @@ func (s *SecureSession) RemotePublicKey() crypto.PubKey {
 	return s.remoteKey
 }
 
-func (s *SecureSession) RemoteWhitenoiseID() string {
+func (s *SecureSession) RemoteWhiteNoiseID() string {
 	whitenoiseID, err := account.WhitenoiseIDFromP2PPK(s.remoteKey)
 	if err != nil {
 		return ""
 	}
 	return whitenoiseID.String()
-}
-
-func (s *SecureSession) SetDeadline(t time.Time) error {
-	return s.insecure.SetDeadline(t)
-}
-
-func (s *SecureSession) SetReadDeadline(t time.Time) error {
-	return s.insecure.SetReadDeadline(t)
-}
-
-func (s *SecureSession) SetWriteDeadline(t time.Time) error {
-	return s.insecure.SetWriteDeadline(t)
 }
 
 func (s *SecureSession) Close() error {
