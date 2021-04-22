@@ -5,7 +5,6 @@ import (
 	"context"
 	"github.com/asaskevich/EventBus"
 	"io"
-	"net"
 	"sync"
 	"time"
 	"whitenoise/common"
@@ -27,6 +26,23 @@ const (
 	NonFullTopic  = "NonFullTopic"
 )
 
+type InsecureConn interface {
+	// Read reads data from the connection.
+	Read(b []byte) (n int, err error)
+
+	// Write writes data to the connection.
+	Write(b []byte) (n int, err error)
+
+	// Close closes the connection.
+	Close() error
+
+	// LocalID  returns the local WhiteNoiseID.
+	LocalID() account.WhiteNoiseID
+
+	// RemoteID  returns the remote WhiteNoiseID.
+	RemoteID() account.WhiteNoiseID
+}
+
 //todo:remove the lock, use buffer pool
 type SafeBuffer struct {
 	b           *bytes.Buffer
@@ -35,8 +51,7 @@ type SafeBuffer struct {
 	readTimeout time.Duration
 }
 
-//Now we use most simple polling way to read synchronously.
-//todo: change into a more efficient way.
+//Using event bus to read synchronously.
 func (b *SafeBuffer) Read(p []byte) (n int, err error) {
 	n, err = b.b.Read(p)
 	if err != nil {
@@ -123,22 +138,14 @@ func (c *CircuitConn) Close() error {
 	return nil
 }
 
-func (c *CircuitConn) LocalAddr() net.Addr {
-	return nil
+func (c *CircuitConn) LocalID() account.WhiteNoiseID {
+	return c.localWhiteNoiseID
 }
 
-func (c *CircuitConn) RemoteAddr() net.Addr {
-	return nil
+func (c *CircuitConn) RemoteID() account.WhiteNoiseID {
+	return c.remoteWhiteNoiseId
 }
 
-func (c *CircuitConn) SetDeadline(t time.Time) error {
-	return nil
-}
-
-func (c *CircuitConn) SetReadDeadline(t time.Time) error {
-	return nil
-}
-
-func (c *CircuitConn) SetWriteDeadline(t time.Time) error {
-	return nil
+func (c *CircuitConn) GetSessionID() string {
+	return c.sessionId
 }
