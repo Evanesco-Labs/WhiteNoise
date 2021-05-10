@@ -26,23 +26,6 @@ const (
 	NonFullTopic  = "NonFullTopic"
 )
 
-type InsecureConn interface {
-	// Read reads data from the connection.
-	Read(b []byte) (n int, err error)
-
-	// Write writes data to the connection.
-	Write(b []byte) (n int, err error)
-
-	// Close closes the connection.
-	Close() error
-
-	// LocalID  returns the local WhiteNoiseID.
-	LocalID() account.WhiteNoiseID
-
-	// RemoteID  returns the remote WhiteNoiseID.
-	RemoteID() account.WhiteNoiseID
-}
-
 //todo:remove the lock, use buffer pool
 type SafeBuffer struct {
 	b           *bytes.Buffer
