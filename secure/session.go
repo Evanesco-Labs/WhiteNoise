@@ -3,15 +3,30 @@ package secure
 import (
 	"context"
 	"github.com/flynn/noise"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"sync"
 	"time"
 	"whitenoise/common"
 	"whitenoise/common/account"
-	"whitenoise/protocol/relay"
-
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/peer"
 )
+
+type InsecureConn interface {
+	// Read reads data from the connection.
+	Read(b []byte) (n int, err error)
+
+	// Write writes data to the connection.
+	Write(b []byte) (n int, err error)
+
+	// Close closes the connection.
+	Close() error
+
+	// LocalID  returns the local WhiteNoiseID.
+	LocalID() account.WhiteNoiseID
+
+	// RemoteID  returns the remote WhiteNoiseID.
+	RemoteID() account.WhiteNoiseID
+}
 
 type SecureSession struct {
 	initiator bool
@@ -23,7 +38,7 @@ type SecureSession struct {
 
 	readLock  sync.Mutex
 	writeLock sync.Mutex
-	insecure  relay.InsecureConn
+	insecure  InsecureConn
 
 	qseek int     // queued bytes seek value.
 	qbuf  []byte  // queued bytes buffer.
@@ -35,7 +50,7 @@ type SecureSession struct {
 	readHandshakeMsgTimeout time.Duration
 }
 
-func NewSecureSession(localID peer.ID, privateKey crypto.PrivKey, ctx context.Context, insecure relay.InsecureConn, remote peer.ID, initiator bool) (*SecureSession, error) {
+func NewSecureSession(localID peer.ID, privateKey crypto.PrivKey, ctx context.Context, insecure InsecureConn, remote peer.ID, initiator bool) (*SecureSession, error) {
 	s := &SecureSession{
 		insecure:                insecure,
 		initiator:               initiator,
