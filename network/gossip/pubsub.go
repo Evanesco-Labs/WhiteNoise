@@ -2,16 +2,17 @@ package gossip
 
 import (
 	"context"
+	"crypto/sha256"
 	"github.com/AsynkronIT/protoactor-go/actor"
 	core "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
 	kaddht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
-	"github.com/multiformats/go-multiaddr"
+	pubsub_pb "github.com/libp2p/go-libp2p-pubsub/pb"
+	"github.com/mr-tron/base58"
 	"google.golang.org/protobuf/proto"
 	"math/rand"
-	"sync"
 	"time"
 	"whitenoise/common"
 	"whitenoise/common/config"
@@ -44,7 +45,7 @@ func (service *DHTService) Dht() *kaddht.IpfsDHT {
 }
 
 func NewDHTService(ctx context.Context, actCtx *actor.RootContext, cfg *config.NetworkConfig, host core.Host, dht *kaddht.IpfsDHT) (*DHTService, error) {
-	ps, err := pubsub.NewGossipSub(ctx, host, pubsub.WithNoAuthor()) //pubsub omit from,dig and change default id
+	ps, err := pubsub.NewGossipSub(ctx, host, pubsub.WithNoAuthor(), pubsub.WithMessageIdFn(MessageID))
 	if err != nil {
 		log.Error("NewPubsubService err: ", err)
 		return nil, err
@@ -106,30 +107,6 @@ func (service *DHTService) InitDHT(bootStrapPeers []string) error {
 		return err
 	}
 	service.dht.RefreshRoutingTable()
-
-	var wg sync.WaitGroup
-	for _, peerAddr := range bootStrapPeers {
-		if peerAddr == "" {
-			continue
-		}
-		maddr, err := multiaddr.NewMultiaddr(peerAddr)
-		if err != nil {
-			log.Errorf("Parse bootstrap node address err %v", err)
-			continue
-		}
-		peerinfo, _ := peer.AddrInfoFromP2pAddr(maddr)
-		peerAddr := peerAddr
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			if err := service.host.Connect(c, *peerinfo); err != nil {
-				log.Warnf("Connect BootStrapPeer %v err %v", peerAddr, err)
-			} else {
-				log.Info("Connect to Bootstrap node %v", peerAddr)
-			}
-		}()
-	}
-	wg.Wait()
 	return nil
 }
 
@@ -322,4 +299,9 @@ func (service *DHTService) handleGossipMsg(clientInfo proxy.ClientInfo, negEnc *
 	if resErr != nil {
 		log.Errorf("NewProbeSignal err %v", resErr)
 	}
+}
+
+func MessageID(pmsg *pubsub_pb.Message) string {
+	hash := sha256.Sum256([]byte(pmsg.String()))
+	return base58.Encode(hash[:])
 }

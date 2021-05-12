@@ -1,6 +1,7 @@
 package relay
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"errors"
 	"github.com/golang/protobuf/proto"
@@ -213,9 +214,26 @@ func (manager *RelayMsgManager) handleRelayProbe(relay *pb.Relay, s session.Stre
 	}
 	sess, ok := manager.GetSession(probe.SessionId)
 	if ok && sess.Role == common.JointRole {
-		manager.ProbeChan <- session.Probe{
+		sessionProbe := session.Probe{
 			SessionId: probe.SessionId,
 			Rand:      probe.Data,
+		}
+		v, ok := manager.probeMap.Load(sessionProbe.SessionId)
+		if !ok {
+			manager.probeMap.Store(sessionProbe.SessionId, sessionProbe)
+			return nil
+		}
+		p := v.(session.Probe)
+		if bytes.Equal(p.Rand, sessionProbe.Rand) {
+			//circuit success
+			log.Debug("send circuit success signal")
+			data := NewCircuitSuccess(sessionProbe.SessionId)
+			err := manager.SendRelay(sessionProbe.SessionId, data)
+			if err != nil {
+				log.Error(err)
+			}
+		} else {
+			manager.CloseCircuit(sessionProbe.SessionId)
 		}
 		return nil
 	}
@@ -244,7 +262,7 @@ func (manager *RelayMsgManager) handleDisconnect(relay *pb.Relay, s session.Stre
 
 	log.Infof("Close circuit %v", dis.SessionId)
 	defer func() { manager.RemoveSession(dis.SessionId) }()
-	_, ok := manager.sessionMap[dis.SessionId]
+	_, ok := manager.sessionMap.Load(dis.SessionId)
 	if !ok {
 		return errors.New("no such session")
 	}
@@ -271,12 +289,13 @@ func (manager *RelayMsgManager) handleCircuitSuccess(relay *pb.Relay, s session.
 	}
 	if sess.Role == common.CallerRole {
 		log.Debug("caller handle circuit success")
-		conn, ok := manager.circuitConnMap[succ.SessionId]
+		v, ok := manager.circuitConnMap.Load(succ.SessionId)
 		if !ok {
 			return errors.New("circuitConn not exist")
 		}
+		conn := v.(*CircuitConn)
 		conn.state = CircuitConnReady
-		manager.circuitConnMap[succ.SessionId] = conn
+		manager.circuitConnMap.Store(succ.SessionId, conn)
 		log.Debug("circuitConn ready ", succ.SessionId)
 		err := manager.NewSecureConnCaller(conn)
 		if err != nil {
@@ -286,12 +305,13 @@ func (manager *RelayMsgManager) handleCircuitSuccess(relay *pb.Relay, s session.
 	}
 
 	if sess.Role == common.AnswerRole {
-		conn, ok := manager.circuitConnMap[succ.SessionId]
+		v, ok := manager.circuitConnMap.Load(succ.SessionId)
 		if !ok {
 			return errors.New("circuitConn not exist")
 		}
+		conn := v.(*CircuitConn)
 		conn.state = CircuitConnReady
-		manager.circuitConnMap[succ.SessionId] = conn
+		manager.circuitConnMap.Store(succ.SessionId, conn)
 		log.Debug("circuitConn ready ", succ.SessionId)
 		err := manager.NewSecureConnAnswer(conn)
 		if err != nil {

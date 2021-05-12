@@ -26,7 +26,6 @@ const (
 	NonFullTopic  = "NonFullTopic"
 )
 
-//todo:remove the lock, use buffer pool
 type SafeBuffer struct {
 	b           *bytes.Buffer
 	mut         sync.RWMutex

@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	core "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/network"
+	"sync"
 	"whitenoise/common/log"
 	"whitenoise/internal/pb"
 	"whitenoise/network/session"
@@ -17,7 +18,7 @@ const ACK_PROTOCOL string = "/ack"
 type AckManager struct {
 	context  context.Context
 	actorCtx *actor.RootContext
-	TaskMap  map[string]Task
+	TaskMap  sync.Map
 	ackPid   *actor.PID
 	host     core.Host
 	eb       EventBus.Bus
@@ -37,7 +38,7 @@ func NewAckManager(host core.Host, ctx context.Context, actCtx *actor.RootContex
 	return &AckManager{
 		context:  ctx,
 		actorCtx: actCtx,
-		TaskMap:  make(map[string]Task),
+		TaskMap:  sync.Map{},
 		host:     host,
 		eb:       eb,
 	}
@@ -68,7 +69,8 @@ func (manager *AckManager) AckStreamHandler(stream network.Stream) {
 		return
 	}
 
-	task, ok := manager.TaskMap[ack.CommandId]
+	res, ok := manager.TaskMap.Load(ack.CommandId)
+	task := res.(Task)
 	if !ok {
 		log.Warnf("No such task %v", task.Id)
 		return
@@ -81,7 +83,7 @@ func (manager *AckManager) AckStreamHandler(stream network.Stream) {
 }
 
 func (manager *AckManager) AddTask(task Task) {
-	manager.TaskMap[task.Id] = task
+	manager.TaskMap.Store(task.Id, task)
 }
 
 func (manager *AckManager) SendAck(ack *pb.Ack, peerId core.PeerID) error {
@@ -105,8 +107,8 @@ func (manager *AckManager) SendAck(ack *pb.Ack, peerId core.PeerID) error {
 }
 
 func (manager *AckManager) DeletTask(id string) {
-	if c, ok := manager.TaskMap[id]; ok {
-		close(c.Channel)
+	if v, ok := manager.TaskMap.Load(id); ok {
+		close(v.(Task).Channel)
 	}
-	delete(manager.TaskMap, id)
+	manager.TaskMap.Delete(id)
 }

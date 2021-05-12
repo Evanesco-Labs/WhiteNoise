@@ -25,6 +25,5 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.25.0
 )

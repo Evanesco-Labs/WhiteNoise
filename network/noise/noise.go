@@ -83,10 +83,13 @@ func NewNoiseService(ctx context.Context, actCtx *actor.RootContext, cfg *config
 		eventBus:     eb,
 	}
 
-	service.host.SetStreamHandler(protocol.ID(relay.RelayProtocol), service.relayManager.RelayStreamHandler)
-	service.host.SetStreamHandler(protocol.ID(command.CMD_PROTOCOL), service.cmdManager.CmdStreamHandler)
 	service.host.SetStreamHandler(protocol.ID(ack.ACK_PROTOCOL), service.ackManager.AckStreamHandler)
 	service.host.SetStreamHandler(protocol.ID(proxy.PROXY_PROTOCOL), service.proxyManager.ProxyStreamHandler)
+
+	if cfg.Mode != config.BootMode {
+		service.host.SetStreamHandler(protocol.ID(relay.RelayProtocol), service.relayManager.RelayStreamHandler)
+		service.host.SetStreamHandler(protocol.ID(command.CMD_PROTOCOL), service.cmdManager.CmdStreamHandler)
+	}
 
 	if cfg.BootStrapPeers == "" {
 		return &service, nil

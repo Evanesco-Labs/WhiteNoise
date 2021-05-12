@@ -31,10 +31,8 @@ const PROXY_PROTOCOL string = "/proxyprotocol"
 const ProxySerivceTime time.Duration = time.Hour
 
 type ProxyManager struct {
-	//clientWNMap          map[string]ClientInfo
-	clientWNMap   sync.Map
-	clientPeerMap sync.Map
-	//clientPeerMap        map[string]account.WhiteNoiseID
+	clientWNMap          sync.Map
+	clientPeerMap        sync.Map
 	actorCtx             *actor.RootContext
 	ctx                  context.Context
 	ackPid               *actor.PID
@@ -96,27 +94,20 @@ func (manager *ProxyManager) SetPid(relayPid *actor.PID, ackPid *actor.PID, goss
 func (manager *ProxyManager) AddClient(wnIdHash string, info ClientInfo) {
 	manager.clientWNMap.Store(wnIdHash, info)
 	manager.clientPeerMap.Store(info.PeerID.String(), info.WhiteNoiseID)
-	//manager.clientWNMap[wnIdHash] = info
-	//manager.clientPeerMap[info.PeerID.String()] = info.WhiteNoiseID
 }
 
 func (manager *ProxyManager) RemoveClient(peerIdString string) {
 	v, ok := manager.clientPeerMap.Load(peerIdString)
-	//whiteNoiseID, ok := manager.clientPeerMap[peerIdString]
 	if !ok {
-		//delete(manager.clientPeerMap, peerIdString)
 		manager.clientPeerMap.Delete(peerIdString)
 		return
 	}
 	whiteNoiseID := v.(account.WhiteNoiseID)
-	//delete(manager.clientWNMap, whiteNoiseID.Hash())
 	manager.clientWNMap.Delete(whiteNoiseID.Hash())
-	//delete(manager.clientPeerMap, peerIdString)
 	manager.clientPeerMap.Delete(peerIdString)
 }
 
 func (manager *ProxyManager) GetClient(wnIdHash string) (ClientInfo, bool) {
-	//info, ok := manager.clientWNMap[wnIdHash]
 	v, ok := manager.clientWNMap.Load(wnIdHash)
 	if !ok {
 		return ClientInfo{}, ok
@@ -125,12 +116,10 @@ func (manager *ProxyManager) GetClient(wnIdHash string) (ClientInfo, bool) {
 }
 
 func (manager *ProxyManager) AddNewCircuitTask(sessionId string, whitenoiseId account.WhiteNoiseID) {
-	//manager.circuitTask[sessionId] = whitenoiseId
 	manager.circuitTask.Store(sessionId, whitenoiseId)
 }
 
 func (manager *ProxyManager) GetCircuitTask(sessionId string) (account.WhiteNoiseID, bool) {
-	//id, ok := manager.circuitTask[sessionId]
 	id, ok := manager.circuitTask.Load(sessionId)
 	if !ok {
 		return nil, ok
@@ -357,7 +346,6 @@ func (manager *ProxyManager) HandleNewCircuit(request *pb.Request, str session.S
 	}
 
 	//server and client connect to the same proxy
-	//todo: this scheme needs review
 	if clientInfo, ok := manager.GetClient(newCircuit.To); ok {
 		log.Info("client server both to me")
 		//new session to the answer role
@@ -379,7 +367,6 @@ func (manager *ProxyManager) HandleNewCircuit(request *pb.Request, str session.S
 		}
 
 		//send build circuit success to clients (act like a joint node)
-		//relayMsg := relay.NewRelayMsg([]byte("build circuit success"), newCircuit.SessionId)
 		log.Debug("send circuit success signal")
 		relayMsg := relay.NewCircuitSuccess(newCircuit.SessionId)
 		fut = manager.actorCtx.RequestFuture(manager.relayPid, relay.ReqSendRelay{
@@ -410,7 +397,6 @@ func (manager *ProxyManager) HandleNewCircuit(request *pb.Request, str session.S
 	resDHTPeers := res.(actorMsg.ResDHTPeers)
 	peers := resDHTPeers.PeerInfos
 	for i := 0; i < manager.RetryTimes; i++ {
-		//todo:break this loop when not enough node in the mainnet (need review)
 		startIndex := rand.New(source).Int()
 		for j := 0; j < len(peers); j++ {
 			startIndex++

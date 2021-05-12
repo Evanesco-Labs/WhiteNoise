@@ -51,12 +51,11 @@ func NewHost(ctx context.Context, cfg *config.NetworkConfig, priv crypto.PrivKey
 			ctx,
 			libp2p.Security(noise.ID, transport),
 			libp2p.Identity(priv),
-			libp2p.Routing(newDHT),
 		)
 		if err != nil {
 			return nil, nil, err
 		}
-		return h, dht, nil
+		return h, nil, nil
 	}
 
 	if cfg.Mode == config.BootMode {
