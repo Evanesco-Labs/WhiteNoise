@@ -28,13 +28,11 @@ type StreamInfo struct {
 }
 
 type RelayMsgManager struct {
-	mut               sync.Mutex
-	circuitConnMap    map[string]*CircuitConn
-	secureConnMap     map[string]*secure.SecureSession
-	streamMap         map[string]StreamInfo
-	sessionMap        map[string]session.Session
-	probeMap          map[string]session.Probe
-	ProbeChan         chan session.Probe
+	circuitConnMap    sync.Map
+	secureConnMap     sync.Map
+	streamMap         sync.Map
+	sessionMap        sync.Map
+	probeMap          sync.Map
 	ackPid            *actor.PID
 	relayPid          *actor.PID
 	host              core.Host
@@ -47,15 +45,13 @@ type RelayMsgManager struct {
 	eb                EventBus.Bus
 }
 
-func NewRelayMsgManager(host core.Host, ctx context.Context, actCtx *actor.RootContext, role config.ServiceMode,
-	privateKey crypto.PrivKey, acc account.Account, eb EventBus.Bus) *RelayMsgManager {
+func NewRelayMsgManager(host core.Host, ctx context.Context, actCtx *actor.RootContext, role config.ServiceMode, privateKey crypto.PrivKey, acc account.Account, eb EventBus.Bus) *RelayMsgManager {
 	return &RelayMsgManager{
-		circuitConnMap:    make(map[string]*CircuitConn),
-		secureConnMap:     make(map[string]*secure.SecureSession),
-		streamMap:         make(map[string]StreamInfo),
-		sessionMap:        make(map[string]session.Session),
-		probeMap:          make(map[string]session.Probe),
-		ProbeChan:         make(chan session.Probe),
+		circuitConnMap:    sync.Map{},
+		secureConnMap:     sync.Map{},
+		streamMap:         sync.Map{},
+		sessionMap:        sync.Map{},
+		probeMap:          sync.Map{},
 		host:              host,
 		actorCtx:          actCtx,
 		context:           ctx,
@@ -71,7 +67,6 @@ func (manager *RelayMsgManager) Start() {
 	props := actor.PropsFromProducer(func() actor.Actor {
 		return manager
 	})
-	go manager.RunProbeHandler(manager.context)
 	manager.relayPid = manager.actorCtx.Spawn(props)
 }
 
@@ -84,149 +79,130 @@ func (manager *RelayMsgManager) SetPid(ackPid *actor.PID) {
 }
 
 func (manager *RelayMsgManager) RemoveSession(sessionId string) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-
-	if secureConn, ok := manager.secureConnMap[sessionId]; ok {
-		secureConn.Close()
-		delete(manager.secureConnMap, sessionId)
+	if v, ok := manager.secureConnMap.Load(sessionId); ok {
+		v.(*secure.SecureSession).Close()
+		manager.secureConnMap.Delete(sessionId)
 	}
 
-	if conn, ok := manager.circuitConnMap[sessionId]; ok {
-		conn.Close()
-		delete(manager.circuitConnMap, sessionId)
+	if v, ok := manager.circuitConnMap.Load(sessionId); ok {
+		v.(*CircuitConn).Close()
+		manager.circuitConnMap.Delete(sessionId)
 	}
 
-	if sess, ok := manager.sessionMap[sessionId]; ok {
+	if sess, ok := manager.sessionMap.Load(sessionId); ok {
+		sess := sess.(session.Session)
 		for _, stream := range sess.Pair {
 			stream.Close()
 		}
-		delete(manager.sessionMap, sessionId)
+		manager.sessionMap.Delete(sessionId)
 	}
-	delete(manager.probeMap, sessionId)
+	manager.probeMap.Delete(sessionId)
 
 }
 
 func (manager *RelayMsgManager) GetCircuit(sessionId string) (*CircuitConn, bool) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	c, ok := manager.circuitConnMap[sessionId]
-	return c, ok
+	v, ok := manager.circuitConnMap.Load(sessionId)
+	if !ok {
+		return nil, ok
+	}
+	return v.(*CircuitConn), ok
 }
 
 func (manager *RelayMsgManager) GetSecureConn(sessionId string) (*secure.SecureSession, bool) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	c, ok := manager.secureConnMap[sessionId]
-	return c, ok
+	v, ok := manager.secureConnMap.Load(sessionId)
+	if !ok {
+		return nil, ok
+	}
+	return v.(*secure.SecureSession), ok
 }
 
 func (manager *RelayMsgManager) AddCircuitConnCaller(sessionId string, remote account.WhiteNoiseID) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	_, ok := manager.circuitConnMap[sessionId]
+	_, ok := manager.circuitConnMap.Load(sessionId)
 	if !ok {
 		conn := manager.NewCircuitConn(manager.context, sessionId, remote)
-		manager.circuitConnMap[sessionId] = conn
+		manager.circuitConnMap.Store(sessionId, conn)
 	}
 }
 
 func (manager *RelayMsgManager) AddCircuitConnAnswer(sessionId string) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	_, ok := manager.circuitConnMap[sessionId]
+	_, ok := manager.circuitConnMap.Load(sessionId)
 	if !ok {
 		conn := manager.NewCircuitConn(manager.context, sessionId, []byte{})
-		manager.circuitConnMap[sessionId] = conn
+		manager.circuitConnMap.Store(sessionId, conn)
 	}
 }
 
-func (manager *RelayMsgManager) RunProbeHandler(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			break
+func (manager *RelayMsgManager) handleProbe(sessionProbe session.Probe) {
+	v, ok := manager.probeMap.Load(sessionProbe.SessionId)
+	if !ok {
+		manager.probeMap.Store(sessionProbe.SessionId, sessionProbe)
+		return
+	}
+	p := v.(session.Probe)
+	if bytes.Equal(p.Rand, sessionProbe.Rand) {
+		//circuit success
+		log.Debug("send circuit success signal")
+		data := NewCircuitSuccess(sessionProbe.SessionId)
+		err := manager.SendRelay(sessionProbe.SessionId, data)
+		if err != nil {
+			log.Error(err)
 		}
-		probe := <-manager.ProbeChan
-		p, ok := manager.probeMap[probe.SessionId]
-		if !ok {
-			manager.probeMap[probe.SessionId] = probe
-			continue
-		}
-		if bytes.Equal(p.Rand, probe.Rand) {
-			//circuit success
-			log.Debug("send circuit success signal")
-			data := NewCircuitSuccess(probe.SessionId)
-			err := manager.SendRelay(probe.SessionId, data)
-			if err != nil {
-				log.Error(err)
-			}
-		} else {
-			manager.CloseCircuit(probe.SessionId)
-		}
+	} else {
+		manager.CloseCircuit(sessionProbe.SessionId)
 	}
 }
-
-// WaitForProbe todo: add join node time out when building a circuit
-func (manager *RelayMsgManager) WaitForProbe() {}
 
 func (manager *RelayMsgManager) AddStream(s session.Stream) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	manager.streamMap[s.StreamId] = StreamInfo{
+	manager.streamMap.Store(s.StreamId, StreamInfo{
 		stream:    s,
 		sessionID: "",
-	}
+	})
 }
 
 func (manager *RelayMsgManager) AddStreamSessionID(streamID string, sessionID string) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	if streamInfo, ok := manager.streamMap[streamID]; ok {
+	if v, ok := manager.streamMap.Load(streamID); ok {
+		streamInfo := v.(StreamInfo)
 		streamInfo.sessionID = sessionID
-		manager.streamMap[streamID] = streamInfo
+		manager.streamMap.Store(streamID, streamInfo)
 	}
 }
 
 func (manager *RelayMsgManager) GetSession(id string) (session.Session, bool) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	s, ok := manager.sessionMap[id]
-	return s, ok
+	s, ok := manager.sessionMap.Load(id)
+	if !ok {
+		return session.Session{}, ok
+	}
+	return s.(session.Session), ok
 }
 
 func (manager *RelayMsgManager) AddSessionId(id string, s session.Session) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	manager.sessionMap[id] = s
+	manager.sessionMap.Store(id, s)
 }
 
 func (manager *RelayMsgManager) SetRole(sessionId string, role common.SessionRole) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	s, ok := manager.sessionMap[sessionId]
+	v, ok := manager.sessionMap.Load(sessionId)
 	if !ok {
 		return
 	}
-	s.Role = role
-	manager.sessionMap[sessionId] = s
+	sess := v.(session.Session)
+	sess.Role = role
+	manager.sessionMap.Store(sessionId, sess)
 }
 
 func (manager *RelayMsgManager) GetStream(id string) (StreamInfo, bool) {
-	manager.mut.Lock()
-	defer manager.mut.Unlock()
-	s, ok := manager.streamMap[id]
-	return s, ok
+	v, ok := manager.streamMap.Load(id)
+	if !ok {
+		return StreamInfo{}, ok
+	}
+	return v.(StreamInfo), ok
 }
 
 func (manager *RelayMsgManager) DeleteStream(streamID string) {
-	delete(manager.streamMap, streamID)
+	manager.streamMap.Delete(streamID)
 }
 
-func (manager *RelayMsgManager) SessionMap() map[string]session.Session {
-	return manager.sessionMap
+func (manager *RelayMsgManager) SessionMap() *sync.Map {
+	return &manager.sessionMap
 }
 
 func (manager *RelayMsgManager) SendRelay(sessionid string, data []byte) (err error) {
@@ -307,7 +283,7 @@ func (manager *RelayMsgManager) SendDisconnectRelay(sessionId string) (err error
 func (manager *RelayMsgManager) CloseCircuit(sessionId string) error {
 	log.Infof("Close circuit %v", sessionId)
 	defer func() { manager.RemoveSession(sessionId) }()
-	_, ok := manager.sessionMap[sessionId]
+	_, ok := manager.sessionMap.Load(sessionId)
 	if !ok {
 		return errors.New("no such session")
 	}
@@ -321,7 +297,7 @@ func (manager *RelayMsgManager) CloseCircuit(sessionId string) error {
 func (manager *RelayMsgManager) NewRelayStream(peerID core.PeerID) (string, error) {
 	stream, err := manager.host.NewStream(manager.context, peerID, protocol.ID(RelayProtocol))
 	if err != nil {
-		log.Infof("generate new stream to %v error: %v\n", peerID, err)
+		log.Infof("newstream to %v error: %v\n", peerID, err)
 		return "", err
 	}
 	log.Info("gen new stream: ", stream.ID())
@@ -393,8 +369,9 @@ func (manager *RelayMsgManager) SetSessionId(sessionID string, streamID string, 
 
 func (manager *RelayMsgManager) GetSessionIDList() []string {
 	sessionList := make([]string, 0)
-	for id, _ := range manager.sessionMap {
-		sessionList = append(sessionList, id)
-	}
+	manager.sessionMap.Range(func(key, value interface{}) bool {
+		sessionList = append(sessionList, key.(string))
+		return true
+	})
 	return sessionList
 }

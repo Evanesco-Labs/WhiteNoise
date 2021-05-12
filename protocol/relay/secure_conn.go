@@ -8,7 +8,7 @@ import (
 )
 
 func (manager *RelayMsgManager) NewSecureConnCaller(conn *CircuitConn) error {
-	if _, ok := manager.secureConnMap[conn.sessionId]; ok {
+	if _, ok := manager.secureConnMap.Load(conn.sessionId); ok {
 		return nil
 	}
 	if conn.remoteWhiteNoiseId == nil {
@@ -22,20 +22,20 @@ func (manager *RelayMsgManager) NewSecureConnCaller(conn *CircuitConn) error {
 	if err != nil {
 		return err
 	}
-	manager.secureConnMap[conn.sessionId] = secureConn
+	manager.secureConnMap.Store(conn.sessionId, secureConn)
 	manager.eb.Publish(common.NewSecureConnCallerTopic, conn.sessionId)
 	return nil
 }
 
 func (manager *RelayMsgManager) NewSecureConnAnswer(conn *CircuitConn) error {
-	if _, ok := manager.secureConnMap[conn.sessionId]; ok {
+	if _, ok := manager.secureConnMap.Load(conn.sessionId); ok {
 		return nil
 	}
 	secureConn, err := secure.NewSecureSession(manager.host.ID(), manager.privateKey, conn.ctx, conn, "", false)
 	if err != nil {
 		return err
 	}
-	manager.secureConnMap[conn.sessionId] = secureConn
+	manager.secureConnMap.Store(conn.sessionId, secureConn)
 	manager.eb.Publish(common.NewSecureConnAnswerTopic, conn.sessionId)
 	return nil
 }
