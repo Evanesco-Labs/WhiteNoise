@@ -54,14 +54,14 @@ func (node *Node) Start(cfg *config.NetworkConfig) {
 	if cfg.Mode == config.ClientMode {
 		node.NoiseService.Start()
 		node.NoiseService.SetPid(nil)
-		node.NoiseService.SetNotify()
+		node.NoiseService.SetNotify(node.Host())
 		return
 	}
 	node.DHTService.Start(cfg)
 	node.NoiseService.Start()
 	node.NoiseService.SetPid(node.DHTService.Pid())
 	node.DHTService.SetPid(node.NoiseService.ProxyPid(), node.NoiseService.RelayPid(), node.NoiseService.CmdPid())
-	node.NoiseService.SetNotify()
+	node.NoiseService.SetNotify(node.Host())
 }
 
 func (node *Node) Host() core.Host {

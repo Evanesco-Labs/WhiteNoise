@@ -147,8 +147,9 @@ func (service *NoiseService) SetPid(gossipPid *actor.PID) {
 	service.cmdManager.SetPid(service.RelayPid(), service.AckPid())
 }
 
-func (service *NoiseService) SetNotify() {
+func (service *NoiseService) SetNotify(h host.Host) {
 	notifiee := NoiseNotifiee{
+		host:     h,
 		actCtx:   service.actCtx,
 		proxyPid: service.ProxyPid(),
 		relayPid: service.RelayPid(),
