@@ -2,13 +2,17 @@ package noise
 
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/multiformats/go-multiaddr"
+	"time"
+	"whitenoise/common"
 	"whitenoise/protocol/proxy"
 	"whitenoise/protocol/relay"
 )
 
 type NoiseNotifiee struct {
+	host     host.Host
 	actCtx   *actor.RootContext
 	proxyPid *actor.PID
 	relayPid *actor.PID
@@ -18,11 +22,15 @@ func (n NoiseNotifiee) Listen(network network.Network, multiaddr multiaddr.Multi
 
 func (n NoiseNotifiee) ListenClose(network network.Network, multiaddr multiaddr.Multiaddr) {}
 
-func (n NoiseNotifiee) Connected(network network.Network, conn network.Conn) {}
+func (n NoiseNotifiee) Connected(network network.Network, conn network.Conn) {
+	until, _ := time.Parse(time.RFC3339, common.NetTimeUntil)
+	n.host.Peerstore().AddAddr(conn.RemotePeer(), conn.RemoteMultiaddr(), time.Until(until))
+}
 
 func (n NoiseNotifiee) Disconnected(network network.Network, conn network.Conn) {
 	//proxy handle client disconnect
 	n.actCtx.Request(n.proxyPid, proxy.ReqUnregister{PeerId: conn.RemotePeer()})
+	n.host.Peerstore().ClearAddrs(conn.RemotePeer())
 }
 
 func (n NoiseNotifiee) OpenedStream(network network.Network, stream network.Stream) {}

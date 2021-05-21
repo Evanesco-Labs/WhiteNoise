@@ -44,3 +44,5 @@ const GetMainnetPeersTimeout = time.Second * 5
 const ReqDHTPeersMaxAmount = 100
 
 const UnreadableTimeout = time.Minute * 5
+
+const NetTimeUntil = "2023-12-11T15:04:05+07:00"
