@@ -147,12 +147,13 @@ func (service *NoiseService) SetPid(gossipPid *actor.PID) {
 	service.cmdManager.SetPid(service.RelayPid(), service.AckPid())
 }
 
-func (service *NoiseService) SetNotify(h host.Host) {
+func (service *NoiseService) SetNotify(h host.Host, cfg *config.NetworkConfig) {
 	notifiee := NoiseNotifiee{
-		host:     h,
-		actCtx:   service.actCtx,
-		proxyPid: service.ProxyPid(),
-		relayPid: service.RelayPid(),
+		host:          h,
+		actCtx:        service.actCtx,
+		proxyPid:      service.ProxyPid(),
+		relayPid:      service.RelayPid(),
+		whiteListMode: cfg.WhiteList,
 	}
 	service.Host().Network().Notify(notifiee)
 }
