@@ -57,7 +57,7 @@ var (
 	NickFlag = cli.StringFlag{
 		Name:  "nick",
 		Usage: "Set nick name for chat example client",
-		Value: "",
+		Value: "Alice",
 	}
 
 	WhiteListFlag = cli.BoolFlag{
@@ -65,6 +65,12 @@ var (
 		Usage:    "Only serves clients in the whitelist.yml",
 		Required: false,
 		Hidden:   false,
+	}
+
+	AccountFromFileFlag = cli.StringFlag{
+		Name:  "account, acc",
+		Usage: "Load WhiteNoise account from key file at this path",
+		Value: "",
 	}
 )
 
@@ -90,6 +96,7 @@ func initApp() *cli.App {
 				LogLevelFlag,
 				BootFlag,
 				WhiteListFlag,
+				AccountFromFileFlag,
 			},
 		},
 
@@ -102,6 +109,7 @@ func initApp() *cli.App {
 				NodeFlag,
 				LogLevelFlag,
 				NickFlag,
+				AccountFromFileFlag,
 			},
 		},
 	}
@@ -114,6 +122,7 @@ func Start(ctx *cli.Context) {
 	clientMode := ctx.Bool("client")
 	bootMode := ctx.Bool("boot")
 	whitelist := ctx.Bool("whitelist")
+	pemPath := ctx.String("account")
 
 	logLevel := ctx.Int("log")
 	log.InitLog(logLevel, os.Stdout, log.PATH)
@@ -136,33 +145,17 @@ func Start(ctx *cli.Context) {
 	}
 
 	// read whitelist from config
-	config.WhiteListPeers = make(map[peer.ID]bool)
-	var ymlConfig = config.YmlConfig{Whitelist: make([]string, 0)}
 	if whitelist {
-		whitelistConfig, err := ioutil.ReadFile("./whitelist.yml")
-		if err != nil {
-			panic(err)
-		}
-		err = yaml.Unmarshal(whitelistConfig, &ymlConfig)
-		if err != nil {
-			panic(err)
-		}
-		for _, c := range ymlConfig.Whitelist {
-			whiteNoiseID, err := account.WhiteNoiseIDfromString(c)
-			if err != nil {
-				panic(err)
-			}
-			peerId, err := account.PeerIDFromWhiteNoiseID(whiteNoiseID)
-			if err != nil {
-				panic(err)
-			}
-			config.WhiteListPeers[peerId] = true
-		}
+		InitWhiteList()
+	}
+
+	acc := account.GetAccountFromFile(pemPath)
+	if acc == nil {
+		acc = account.GetAccount()
 	}
 
 	var err error
-	acc := account.GetAccount()
-	node, err = network.NewNode(con, &cfg, *acc)
+	node, err = network.NewNode(con, &cfg, acc)
 	if err != nil {
 		panic(err)
 	}
@@ -177,13 +170,17 @@ func StartChat(ctx *cli.Context) {
 	n := ctx.String("node")
 	con := context.Background()
 	nick := ctx.String("nick")
-	if nick == "" {
-		nick = "Ninox"
+	pemPath := ctx.String("account")
+
+	sdk.BootStrapPeers = bootstrap
+
+	acc := account.GetAccountFromFile(pemPath)
+	if acc == nil {
+		acc = account.GetAccount()
 	}
 
 	var err error
-	sdk.BootStrapPeers = bootstrap
-	wnSDK, err = sdk.NewClient(con)
+	wnSDK, err = sdk.NewClient(con, acc)
 	if err != nil {
 		panic(err)
 	}
@@ -215,6 +212,31 @@ func StartChat(ctx *cli.Context) {
 	} else {
 		chat.Chat(nick, wnSDK.GetWhiteNoiseID(), "", wnSDK)
 		waitToExit()
+	}
+}
+
+func InitWhiteList() {
+	config.WhiteListPeers = make(map[peer.ID]bool)
+	var ymlConfig = config.YmlConfig{Whitelist: make([]string, 0)}
+
+	whitelistConfig, err := ioutil.ReadFile("./whitelist.yml")
+	if err != nil {
+		panic(err)
+	}
+	err = yaml.Unmarshal(whitelistConfig, &ymlConfig)
+	if err != nil {
+		panic(err)
+	}
+	for _, c := range ymlConfig.Whitelist {
+		whiteNoiseID, err := account.WhiteNoiseIDfromString(c)
+		if err != nil {
+			panic(err)
+		}
+		peerId, err := account.PeerIDFromWhiteNoiseID(whiteNoiseID)
+		if err != nil {
+			panic(err)
+		}
+		config.WhiteListPeers[peerId] = true
 	}
 }
 

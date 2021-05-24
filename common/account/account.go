@@ -5,6 +5,8 @@ import (
 	"crypto/rand"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	crypto2 "github.com/libp2p/go-libp2p-core/crypto"
+	"io/ioutil"
+	"os"
 	"whitenoise/common/log"
 	"whitenoise/crypto"
 
@@ -51,6 +53,48 @@ func GetAccount() *Account {
 	}
 
 	return nil
+}
+
+func GetAccountFromFile(path string) *Account {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		if err == os.ErrNotExist {
+			log.Error("key file not exit")
+		}
+		return nil
+	}
+	if fileInfo.IsDir() {
+		return nil
+	}
+
+	f, err := os.Open(path)
+	defer f.Close()
+	if err != nil {
+		log.Error("open file err", err)
+		return nil
+	}
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil
+	}
+	priv, err := crypto.DecodeEcdsaPriv(string(data))
+	if err != nil {
+		log.Error(err)
+		return nil
+	}
+	privB, err := crypto.MarshallECDSAPrivateKey(priv)
+	if err != nil {
+		return nil
+	}
+	pubB, err := crypto.MarshallECDSAPublicKey(&priv.PublicKey)
+	if err != nil {
+		return nil
+	}
+	return &Account{
+		pubKey:  pubB,
+		privKey: privB,
+	}
 }
 
 func NewOneTimeAccount() *Account {

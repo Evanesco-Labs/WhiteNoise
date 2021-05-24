@@ -39,7 +39,7 @@ type NoiseService struct {
 	cmdManager    *command.CmdManager
 	ProxyNode     core.PeerID
 	Role          config.ServiceMode
-	Account       account.Account
+	Account       *account.Account
 	eventBus      EventBus.Bus
 	BootstrapPeer peer.ID
 }
@@ -68,7 +68,7 @@ func (service *NoiseService) TryConnect(peer core.PeerAddrInfo) {
 	}
 }
 
-func NewNoiseService(ctx context.Context, actCtx *actor.RootContext, cfg *config.NetworkConfig, h core.Host, key crypto.PrivKey, acc account.Account) (*NoiseService, error) {
+func NewNoiseService(ctx context.Context, actCtx *actor.RootContext, cfg *config.NetworkConfig, h core.Host, key crypto.PrivKey, acc *account.Account) (*NoiseService, error) {
 	eb := EventBus.New()
 	service := NoiseService{
 		host:         h,

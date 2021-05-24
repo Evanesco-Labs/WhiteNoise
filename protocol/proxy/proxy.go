@@ -46,7 +46,7 @@ type ProxyManager struct {
 	RetryTimes           int
 	//todo:clean tasks
 	circuitTask sync.Map
-	Account     account.Account
+	Account     *account.Account
 	eb          EventBus.Bus
 }
 
@@ -57,7 +57,7 @@ type ClientInfo struct {
 	time         time.Duration
 }
 
-func NewProxyService(host core.Host, ctx context.Context, actCtx *actor.RootContext, acc account.Account, eb EventBus.Bus) *ProxyManager {
+func NewProxyService(host core.Host, ctx context.Context, actCtx *actor.RootContext, acc *account.Account, eb EventBus.Bus) *ProxyManager {
 	return &ProxyManager{
 		clientWNMap:          sync.Map{},
 		clientPeerMap:        sync.Map{},

@@ -41,11 +41,11 @@ type RelayMsgManager struct {
 	role              config.ServiceMode
 	privateKey        crypto.PrivKey
 	SetSessionTimeout time.Duration
-	Account           account.Account
+	Account           *account.Account
 	eb                EventBus.Bus
 }
 
-func NewRelayMsgManager(host core.Host, ctx context.Context, actCtx *actor.RootContext, role config.ServiceMode, privateKey crypto.PrivKey, acc account.Account, eb EventBus.Bus) *RelayMsgManager {
+func NewRelayMsgManager(host core.Host, ctx context.Context, actCtx *actor.RootContext, role config.ServiceMode, privateKey crypto.PrivKey, acc *account.Account, eb EventBus.Bus) *RelayMsgManager {
 	return &RelayMsgManager{
 		circuitConnMap:    sync.Map{},
 		secureConnMap:     sync.Map{},
