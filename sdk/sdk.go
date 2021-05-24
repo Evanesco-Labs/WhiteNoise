@@ -49,14 +49,13 @@ type WhiteNoiseClient struct {
 	NewCircuitTimeout time.Duration
 }
 
-func NewClient(ctx context.Context) (*WhiteNoiseClient, error) {
+func NewClient(ctx context.Context, acc *account.Account) (*WhiteNoiseClient, error) {
 	cfg := config.NetworkConfig{
 		RendezvousString: "whitenoise",
 		BootStrapPeers:   BootStrapPeers,
 		Mode:             config.ClientMode,
 	}
-	acc := account.GetAccount()
-	node, err := network.NewNode(ctx, &cfg, *acc)
+	node, err := network.NewNode(ctx, &cfg, acc)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,7 @@ func NewOneTimeClient(ctx context.Context) (*WhiteNoiseClient, error) {
 		Mode:             config.ClientMode,
 	}
 	acc := account.NewOneTimeAccount()
-	node, err := network.NewNode(ctx, &cfg, *acc)
+	node, err := network.NewNode(ctx, &cfg, acc)
 	if err != nil {
 		return nil, err
 	}

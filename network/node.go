@@ -18,7 +18,7 @@ type Node struct {
 	DHTService   *gossip.DHTService
 }
 
-func NewNode(ctx context.Context, cfg *config.NetworkConfig, acc account.Account) (*Node, error) {
+func NewNode(ctx context.Context, cfg *config.NetworkConfig, acc *account.Account) (*Node, error) {
 	whiteNoiseID := acc.GetWhiteNoiseID()
 	log.Info("WhiteNoiseID:", whiteNoiseID.String())
 	priv := acc.GetP2PPrivKey()

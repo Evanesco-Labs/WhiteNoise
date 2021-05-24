@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"github.com/ethereum/go-ethereum/crypto/ecies"
 	"github.com/libp2p/go-libp2p-core/crypto"
@@ -76,4 +77,23 @@ func ECIESEncrypt(key *ecies.PublicKey, plaintext []byte, r io.Reader) ([]byte, 
 
 func ECIESDecrypt(key *ecies.PrivateKey, cyphertext []byte) ([]byte, error) {
 	return key.Decrypt(cyphertext, nil, nil)
+}
+
+func EncodeEcdsaPriv(privateKey *ecdsa.PrivateKey) (string, error) {
+	x509Encoded, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		return "", err
+	}
+	pemEncoded := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509Encoded})
+	return string(pemEncoded), nil
+}
+
+func DecodeEcdsaPriv(pemEncoded string) (*ecdsa.PrivateKey, error) {
+	block, _ := pem.Decode([]byte(pemEncoded))
+	x509Encoded := block.Bytes
+	privateKey, err := x509.ParseECPrivateKey(x509Encoded)
+	if err != nil {
+		return nil, err
+	}
+	return privateKey, nil
 }
