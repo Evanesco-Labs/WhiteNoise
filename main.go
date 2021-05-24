@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/urfave/cli"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -56,6 +59,13 @@ var (
 		Usage: "Set nick name for chat example client",
 		Value: "",
 	}
+
+	WhiteListFlag = cli.BoolFlag{
+		Name:     "whitelist",
+		Usage:    "Only serves clients in the whitelist.yml",
+		Required: false,
+		Hidden:   false,
+	}
 )
 
 func main() {
@@ -79,6 +89,7 @@ func initApp() *cli.App {
 				ModeFlag,
 				LogLevelFlag,
 				BootFlag,
+				WhiteListFlag,
 			},
 		},
 
@@ -102,6 +113,7 @@ func Start(ctx *cli.Context) {
 	bootstrap := ctx.String("bootstrap")
 	clientMode := ctx.Bool("client")
 	bootMode := ctx.Bool("boot")
+	whitelist := ctx.Bool("whitelist")
 
 	logLevel := ctx.Int("log")
 	log.InitLog(logLevel, os.Stdout, log.PATH)
@@ -112,6 +124,7 @@ func Start(ctx *cli.Context) {
 		ListenPort:       port,
 		BootStrapPeers:   bootstrap,
 		Mode:             config.ServerMode,
+		WhiteList:        whitelist,
 	}
 
 	if clientMode {
@@ -120,6 +133,31 @@ func Start(ctx *cli.Context) {
 
 	if bootMode {
 		cfg.Mode = config.BootMode
+	}
+
+	// read whitelist from config
+	config.WhiteListPeers = make(map[peer.ID]bool)
+	var ymlConfig = config.YmlConfig{Whitelist: make([]string, 0)}
+	if whitelist {
+		whitelistConfig, err := ioutil.ReadFile("./whitelist.yml")
+		if err != nil {
+			panic(err)
+		}
+		err = yaml.Unmarshal(whitelistConfig, &ymlConfig)
+		if err != nil {
+			panic(err)
+		}
+		for _, c := range ymlConfig.Whitelist {
+			whiteNoiseID, err := account.WhiteNoiseIDfromString(c)
+			if err != nil {
+				panic(err)
+			}
+			peerId, err := account.PeerIDFromWhiteNoiseID(whiteNoiseID)
+			if err != nil {
+				panic(err)
+			}
+			config.WhiteListPeers[peerId] = true
+		}
 	}
 
 	var err error
