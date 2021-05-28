@@ -8,6 +8,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/flynn/noise v0.0.0-20180327030543-2492fe189ae6
 	github.com/gdamore/tcell/v2 v2.2.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.4.3
 	github.com/libp2p/go-buffer-pool v0.0.2
 	github.com/libp2p/go-libp2p v0.13.0
