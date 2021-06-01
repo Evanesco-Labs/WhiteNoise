@@ -6,18 +6,22 @@ import (
 	"testing"
 )
 
-func TestEd25519Generate(t *testing.T) {
+func TestECIES(t *testing.T) {
+	message := []byte("hello ecies")
 
-	priv, _, err := GenerateEd25519KeyPair(rand.Reader)
+	priv, pub, err := GenerateEd25519KeyPair(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cyphertext, err := pub.ECIESEncrypt(message, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	p2pPriv, p2pPub, err := P2PKeypairFromEd25519(priv)
+	plaintext, err := priv.ECIESDecrypt(cyphertext)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, p2pPriv.GetPublic().Equals(p2pPub), true)
-
+	assert.Equal(t, plaintext, message)
 }

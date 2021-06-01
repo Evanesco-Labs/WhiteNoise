@@ -15,6 +15,7 @@ import (
 	"whitenoise/common/account"
 	"whitenoise/common/config"
 	"whitenoise/common/log"
+	crypto2 "whitenoise/crypto"
 	"whitenoise/network/session"
 	"whitenoise/protocol/ack"
 	"whitenoise/secure"
@@ -116,7 +117,7 @@ func (manager *RelayMsgManager) GetSecureConn(sessionId string) (*secure.SecureS
 	return v.(*secure.SecureSession), ok
 }
 
-func (manager *RelayMsgManager) AddCircuitConnCaller(sessionId string, remote account.WhiteNoiseID) {
+func (manager *RelayMsgManager) AddCircuitConnCaller(sessionId string, remote crypto2.WhiteNoiseID) {
 	_, ok := manager.circuitConnMap.Load(sessionId)
 	if !ok {
 		conn := manager.NewCircuitConn(manager.context, sessionId, remote)
@@ -127,7 +128,7 @@ func (manager *RelayMsgManager) AddCircuitConnCaller(sessionId string, remote ac
 func (manager *RelayMsgManager) AddCircuitConnAnswer(sessionId string) {
 	_, ok := manager.circuitConnMap.Load(sessionId)
 	if !ok {
-		conn := manager.NewCircuitConn(manager.context, sessionId, []byte{})
+		conn := manager.NewCircuitConn(manager.context, sessionId, crypto2.WhiteNoiseID{})
 		manager.circuitConnMap.Store(sessionId, conn)
 	}
 }

@@ -1,14 +1,15 @@
 package account
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"errors"
+	"github.com/golang/protobuf/proto"
 	crypto2 "github.com/libp2p/go-libp2p-core/crypto"
 	"io/ioutil"
 	"os"
 	"whitenoise/common/log"
 	"whitenoise/crypto"
+	"whitenoise/internal/pb"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"whitenoise/common/store"
@@ -16,43 +17,47 @@ import (
 
 const DB_DIR = "./db"
 
+const DefaultKeyType = crypto.DefaultKeyType
+
 type LevelDB struct {
 	db *store.LevelDBStore
 }
 
 type Account struct {
-	pubKey  []byte
-	privKey []byte
+	KeyType int
+	pubKey  crypto.PublicKey
+	privKey crypto.PrivateKey
 }
 
-func GetAccount() *Account {
+func GetAccount(keyType int) *Account {
 	leveldb, err := OpenLevelDB(DB_DIR)
 	if err != nil {
 		log.Error("in GetAccount open leveldb err:", err.Error())
 	}
 
 	account, err := leveldb.QueryDefaultAccount()
-	if account != nil && err == nil {
+	if account != nil && err == nil && account.KeyType == keyType {
 		log.Info("get default account from leveldb")
 		return account
 	}
 
-	if account == nil && err == nil {
-		r := rand.Reader
-		priv, err := crypto.GenerateECDSAKeyPair(r)
-		if err != nil {
-			return nil
-		}
-		err, acnt := leveldb.InsertOrUpdateAccount(priv)
-		if err != nil {
-			log.Error("in GetAccount, insert or update accout err:", err.Error())
-			return nil
-		}
-		log.Info("no account, create default one successfully.")
-		return acnt
+	r := rand.Reader
+	priv, pub, err := crypto.GenerateKeyPair(keyType, r)
+	if err != nil {
+		return nil
 	}
-
-	return nil
+	account = &Account{
+		KeyType: keyType,
+		pubKey:  pub,
+		privKey: priv,
+	}
+	err = leveldb.InsertOrUpdateAccount(account)
+	if err != nil {
+		log.Error("in GetAccount, insert or update accout err:", err.Error())
+		return nil
+	}
+	log.Info("no account, create default one successfully.")
+	return account
 }
 
 func GetAccountFromFile(path string) *Account {
@@ -83,38 +88,22 @@ func GetAccountFromFile(path string) *Account {
 		log.Error(err)
 		return nil
 	}
-	privB, err := crypto.MarshallECDSAPrivateKey(priv)
-	if err != nil {
-		return nil
-	}
-	pubB, err := crypto.MarshallECDSAPublicKey(&priv.PublicKey)
-	if err != nil {
-		return nil
-	}
+	privKey := crypto.ECDSAPrivateKey{Priv: priv}
+
 	return &Account{
-		pubKey:  pubB,
-		privKey: privB,
+		KeyType: crypto.ECDSA,
+		pubKey:  privKey.Public(),
+		privKey: privKey,
 	}
 }
 
-func NewOneTimeAccount() *Account {
+func NewOneTimeAccount(keyType int) (*Account, error) {
 	r := rand.Reader
-	priv, err := crypto.GenerateECDSAKeyPair(r)
+	priv, pub, err := crypto.GenerateKeyPair(keyType, r)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	pubBytes, err := crypto.MarshallECDSAPublicKey(&priv.PublicKey)
-	if err != nil {
-		log.Error("in InsertOrUpdateAccount, pubKey.Bytes() err:", err.Error())
-		return nil
-	}
-
-	privBytes, err := crypto.MarshallECDSAPrivateKey(priv)
-	if err != nil {
-		log.Error("in InsertOrUpdateAccount, privKey.Bytes() err:", err.Error())
-		return nil
-	}
-	return &Account{pubKey: pubBytes, privKey: privBytes}
+	return &Account{pubKey: pub, privKey: priv, KeyType: keyType}, nil
 }
 
 func OpenLevelDB(path string) (*LevelDB, error) {
@@ -137,20 +126,17 @@ func (this *LevelDB) Close() {
 	this.db.Close()
 }
 
-func (this *LevelDB) InsertOrUpdateAccount(priv *ecdsa.PrivateKey) (error, *Account) {
-	pubBytes, err := crypto.MarshallECDSAPublicKey(&priv.PublicKey)
-	if err != nil {
-		log.Error("in InsertOrUpdateAccount, pubKey.Bytes() err:", err.Error())
-		return err, nil
+func (this *LevelDB) InsertOrUpdateAccount(acc *Account) error {
+	pbAccount := pb.Account{
+		Type:       int32(acc.KeyType),
+		PrivateKey: acc.privKey.Bytes(),
+		PublicKey:  acc.pubKey.Bytes(),
 	}
-
-	privBytes, err := crypto.MarshallECDSAPrivateKey(priv)
+	data, err := proto.Marshal(&pbAccount)
 	if err != nil {
-		log.Error("in InsertOrUpdateAccount, privKey.Bytes() err:", err.Error())
-		return err, nil
+		return err
 	}
-	info := &Account{pubKey: pubBytes, privKey: privBytes}
-	return this.db.Put([]byte("default"), privBytes), info
+	return this.db.Put([]byte("default"), data)
 }
 
 func (this *LevelDB) QueryDefaultAccount() (*Account, error) {
@@ -169,65 +155,63 @@ func (this *LevelDB) QueryAccount(label string) (*Account, error) {
 		return nil, nil
 	}
 
-	info := &Account{privKey: value}
-	return info, nil
-}
-
-func (this *LevelDB) DeleteAccount(pubKey *ecdsa.PublicKey) error {
-	if rawKey, err := crypto.MarshallECDSAPublicKey(pubKey); err == nil {
-		return this.db.Delete(rawKey)
-	} else {
-		return err
+	pbAccount := pb.Account{}
+	err = proto.Unmarshal(value, &pbAccount)
+	if err != nil {
+		return nil, err
+	}
+	switch int(pbAccount.Type) {
+	case crypto.Ed25519:
+		publicKey, err := crypto.UnMarshallEd25519PublicKey(pbAccount.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		privateKey, err := crypto.UnMarshallEd25519PrivateKey(pbAccount.PrivateKey)
+		if err != nil {
+			return nil, err
+		}
+		return &Account{
+			KeyType: int(pbAccount.Type),
+			pubKey:  publicKey,
+			privKey: privateKey,
+		}, nil
+	case crypto.ECDSA:
+		publicKey, err := crypto.UnMarshallECDSAPublicKey(pbAccount.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		privateKey, err := crypto.UnMarshallECDSAPrivateKey(pbAccount.PrivateKey)
+		if err != nil {
+			return nil, err
+		}
+		return &Account{
+			KeyType: int(pbAccount.Type),
+			pubKey:  publicKey,
+			privKey: privateKey,
+		}, nil
+	default:
+		return nil, errors.New("unsupport key type")
 	}
 }
 
-func (this *Account) GetP2PPrivKey() crypto2.PrivKey {
-	if this == nil {
+func (acc *Account) GetPrivateKey() crypto.PrivateKey {
+	return acc.privKey
+}
+
+func (acc *Account) GetPublicKey() crypto.PublicKey {
+	return acc.pubKey
+}
+
+func (acc *Account) GetP2PPrivKey() crypto2.PrivKey {
+	if acc == nil {
 		log.Error("account is nil, please use an valid one.")
 		return nil
 	}
-	privKey, err := crypto.UnMarshallECDSAPrivateKey(this.privKey)
-	if err != nil {
-		log.Error("UnMarshallECDSAPrivateKey err:", err.Error())
-		return nil
-	}
-	privP2P, _, err := crypto.P2PKeypairFromECDSA(privKey)
-	if err != nil {
-		log.Error("P2PKeypairFromECDSA err:", err.Error())
-	}
-	return privP2P
-}
 
-func (this *Account) GetECIESPrivKey() *ecies.PrivateKey {
-	if this == nil {
-		log.Error("account is nil, please use an valid one.")
-		return nil
-	}
-	privKey, err := crypto.UnMarshallECDSAPrivateKey(this.privKey)
+	priv, _, err := acc.GetPrivateKey().GetP2PKeypair()
 	if err != nil {
-		log.Error("UnMarshallECDSAPrivateKey err:", err.Error())
+		log.Error(err)
 		return nil
 	}
-	return crypto.ECIESKeypairFromECDSA(privKey)
-}
-
-//whitenoise ID is the marshall of ecdsa publickey
-func (this *Account) GetWhiteNoiseID() WhiteNoiseID {
-	if this == nil {
-		log.Error("account is nil, please use an valid one.")
-		return nil
-	}
-	privKey, err := crypto.UnMarshallECDSAPrivateKey(this.privKey)
-	if err != nil {
-		log.Error("UnMarshallECDSAPrivateKey err:", err.Error())
-		return nil
-	}
-
-	id, err := crypto.MarshallECDSAPublicKey(&privKey.PublicKey)
-	if err != nil {
-		log.Error("MarshallECDSAPublicKey err:", err.Error())
-		return nil
-	}
-
-	return id
+	return priv
 }

@@ -19,7 +19,7 @@ type Node struct {
 }
 
 func NewNode(ctx context.Context, cfg *config.NetworkConfig, acc *account.Account) (*Node, error) {
-	whiteNoiseID := acc.GetWhiteNoiseID()
+	whiteNoiseID := acc.GetPublicKey().GetWhiteNoiseID()
 	log.Info("WhiteNoiseID:", whiteNoiseID.String())
 	priv := acc.GetP2PPrivKey()
 	if nil == priv {

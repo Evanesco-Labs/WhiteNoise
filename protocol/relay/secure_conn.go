@@ -2,8 +2,6 @@ package relay
 
 import (
 	"whitenoise/common"
-	"whitenoise/common/account"
-	"whitenoise/common/log"
 	"whitenoise/secure"
 )
 
@@ -11,10 +9,10 @@ func (manager *RelayMsgManager) NewSecureConnCaller(conn *CircuitConn) error {
 	if _, ok := manager.secureConnMap.Load(conn.sessionId); ok {
 		return nil
 	}
-	if conn.remoteWhiteNoiseId == nil {
-		log.Error("remote WhiteNoiseId nil")
-	}
-	remotePeerID, err := account.PeerIDFromWhiteNoiseID(conn.remoteWhiteNoiseId)
+	//if conn.remoteWhiteNoiseId == nil {
+	//	log.Error("remote WhiteNoiseId nil")
+	//}
+	remotePeerID, err := conn.remoteWhiteNoiseId.GetPeerID()
 	if err != nil {
 		return err
 	}

@@ -51,7 +51,7 @@ type ProxyManager struct {
 }
 
 type ClientInfo struct {
-	WhiteNoiseID account.WhiteNoiseID
+	WhiteNoiseID crypto.WhiteNoiseID
 	PeerID       core.PeerID
 	state        int
 	time         time.Duration
@@ -102,7 +102,7 @@ func (manager *ProxyManager) RemoveClient(peerIdString string) {
 		manager.clientPeerMap.Delete(peerIdString)
 		return
 	}
-	whiteNoiseID := v.(account.WhiteNoiseID)
+	whiteNoiseID := v.(crypto.WhiteNoiseID)
 	manager.clientWNMap.Delete(whiteNoiseID.Hash())
 	manager.clientPeerMap.Delete(peerIdString)
 }
@@ -115,16 +115,16 @@ func (manager *ProxyManager) GetClient(wnIdHash string) (ClientInfo, bool) {
 	return v.(ClientInfo), ok
 }
 
-func (manager *ProxyManager) AddNewCircuitTask(sessionId string, whitenoiseId account.WhiteNoiseID) {
+func (manager *ProxyManager) AddNewCircuitTask(sessionId string, whitenoiseId crypto.WhiteNoiseID) {
 	manager.circuitTask.Store(sessionId, whitenoiseId)
 }
 
-func (manager *ProxyManager) GetCircuitTask(sessionId string) (account.WhiteNoiseID, bool) {
+func (manager *ProxyManager) GetCircuitTask(sessionId string) (crypto.WhiteNoiseID, bool) {
 	id, ok := manager.circuitTask.Load(sessionId)
 	if !ok {
-		return nil, ok
+		return crypto.WhiteNoiseID{}, ok
 	}
-	return id.(account.WhiteNoiseID), ok
+	return id.(crypto.WhiteNoiseID), ok
 }
 
 func (manager *ProxyManager) ProxyStreamHandler(stream network.Stream) {
@@ -196,7 +196,7 @@ func (manager *ProxyManager) ProxyStreamHandler(stream network.Stream) {
 			manager.actorCtx.Request(manager.ackPid, ack.ReqAck{Ack: &ackMsg, PeerId: str.RemotePeer})
 			break
 		}
-		whiteNoiseID, err := account.WhiteNoiseIDfromString(newProxyReq.WhiteNoiseID)
+		whiteNoiseID, err := crypto.WhiteNoiseIDfromString(newProxyReq.WhiteNoiseID)
 		if err != nil {
 			log.Debug("WhiteNoiseIDfromString err:", err)
 			ackMsg.Result = false
@@ -282,8 +282,9 @@ func (manager *ProxyManager) HandleDecrypt(request *pb.Request, str session.Stre
 	if err != nil {
 		return nil, err
 	}
-	priv := manager.Account.GetECIESPrivKey()
-	plain, err := crypto.ECIESDecrypt(priv, reqDecrypt.Cypher)
+	//priv := manager.Account.GetECIESPrivKey()
+	//plain, err := crypto.ECIESDecrypt(priv, reqDecrypt.Cypher)
+	plain, err := manager.Account.GetPrivateKey().ECIESDecrypt(reqDecrypt.Cypher)
 	if err != nil {
 		return nil, err
 	}
@@ -305,11 +306,11 @@ func (manager *ProxyManager) HandleEncrypt(request *pb.Request, str session.Stre
 	if !ok {
 		return nil, errors.New("session not exist")
 	}
-	eciesPK, err := account.ECIESPKFromWhiteNoiseID(whitenoise)
+	pk, err := whitenoise.PublicKey()
 	if err != nil {
 		return nil, err
 	}
-	negCypherData, err := crypto.ECIESEncrypt(eciesPK, negPlaintext.Neg, cr.Reader)
+	negCypherData, err := pk.ECIESEncrypt(negPlaintext.Neg, cr.Reader)
 	if err != nil {
 		return nil, err
 	}

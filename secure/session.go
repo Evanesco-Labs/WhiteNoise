@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 	"whitenoise/common"
-	"whitenoise/common/account"
+	crypto2 "whitenoise/crypto"
 )
 
 type InsecureConn interface {
@@ -22,10 +22,10 @@ type InsecureConn interface {
 	Close() error
 
 	// LocalID  returns the local WhiteNoiseID.
-	LocalID() account.WhiteNoiseID
+	LocalID() crypto2.WhiteNoiseID
 
 	// RemoteID  returns the remote WhiteNoiseID.
-	RemoteID() account.WhiteNoiseID
+	RemoteID() crypto2.WhiteNoiseID
 }
 
 type SecureSession struct {
@@ -93,11 +93,8 @@ func (s *SecureSession) LocalPublicKey() crypto.PubKey {
 }
 
 func (s *SecureSession) LocalWhiteNoiseID() string {
-	whitenoiseID, err := account.WhitenoiseIDFromP2PPK(s.localKey.GetPublic())
-	if err != nil {
-		return ""
-	}
-	return whitenoiseID.String()
+	publicP2P := s.localKey.GetPublic()
+	return crypto2.WhiteNoiseIDFromP2PPK(publicP2P)
 }
 
 func (s *SecureSession) RemotePeer() peer.ID {
@@ -109,11 +106,7 @@ func (s *SecureSession) RemotePublicKey() crypto.PubKey {
 }
 
 func (s *SecureSession) RemoteWhiteNoiseID() string {
-	whitenoiseID, err := account.WhitenoiseIDFromP2PPK(s.remoteKey)
-	if err != nil {
-		return ""
-	}
-	return whitenoiseID.String()
+	return crypto2.WhiteNoiseIDFromP2PPK(s.remoteKey)
 }
 
 func (s *SecureSession) Close() error {

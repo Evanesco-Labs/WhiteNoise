@@ -16,6 +16,7 @@ import (
 	"whitenoise/common/account"
 	"whitenoise/common/config"
 	"whitenoise/common/log"
+	"whitenoise/crypto"
 	"whitenoise/network"
 	"whitenoise/sdk"
 )
@@ -151,7 +152,7 @@ func Start(ctx *cli.Context) {
 
 	acc := account.GetAccountFromFile(pemPath)
 	if acc == nil {
-		acc = account.GetAccount()
+		acc = account.GetAccount(crypto.Ed25519)
 	}
 
 	var err error
@@ -176,7 +177,7 @@ func StartChat(ctx *cli.Context) {
 
 	acc := account.GetAccountFromFile(pemPath)
 	if acc == nil {
-		acc = account.GetAccount()
+		acc = account.GetAccount(crypto.Ed25519)
 	}
 
 	var err error
@@ -228,11 +229,11 @@ func InitWhiteList() {
 		panic(err)
 	}
 	for _, c := range ymlConfig.Whitelist {
-		whiteNoiseID, err := account.WhiteNoiseIDfromString(c)
+		whiteNoiseID, err := crypto.WhiteNoiseIDfromString(c)
 		if err != nil {
 			panic(err)
 		}
-		peerId, err := account.PeerIDFromWhiteNoiseID(whiteNoiseID)
+		peerId, err := whiteNoiseID.GetPeerID()
 		if err != nil {
 			panic(err)
 		}

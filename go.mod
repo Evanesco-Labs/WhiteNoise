@@ -25,7 +25,10 @@ require (
 	github.com/rivo/tview v0.0.0-20210427112837-09cec83b1732
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/urfave/cli v1.22.1
+	go.dedis.ch/kyber/v3 v3.0.9
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace go.dedis.ch/kyber/v3 => /Users/houmy/Documents/GoPro/src/github.com/dedis/kyber
