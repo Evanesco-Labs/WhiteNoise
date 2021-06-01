@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 	"whitenoise/common"
-	"whitenoise/common/account"
 	"whitenoise/common/log"
+	"whitenoise/crypto"
 )
 
 type CircuitConnState int
@@ -64,8 +64,8 @@ func (b *SafeBuffer) SetReadTimeout(duration time.Duration) {
 }
 
 type CircuitConn struct {
-	localWhiteNoiseID  account.WhiteNoiseID
-	remoteWhiteNoiseId account.WhiteNoiseID
+	localWhiteNoiseID  crypto.WhiteNoiseID
+	remoteWhiteNoiseId crypto.WhiteNoiseID
 	buffer             SafeBuffer
 	sessionId          string
 	relayMananger      *RelayMsgManager
@@ -74,10 +74,10 @@ type CircuitConn struct {
 	state              CircuitConnState
 }
 
-func (manager *RelayMsgManager) NewCircuitConn(parentCtx context.Context, sessionID string, remote account.WhiteNoiseID) *CircuitConn {
+func (manager *RelayMsgManager) NewCircuitConn(parentCtx context.Context, sessionID string, remote crypto.WhiteNoiseID) *CircuitConn {
 	ctx, cancel := context.WithCancel(parentCtx)
 	circuit := CircuitConn{
-		localWhiteNoiseID:  manager.Account.GetWhiteNoiseID(),
+		localWhiteNoiseID:  manager.Account.GetPublicKey().GetWhiteNoiseID(),
 		remoteWhiteNoiseId: remote,
 		buffer: SafeBuffer{
 			b:           new(bytes.Buffer),
@@ -120,11 +120,11 @@ func (c *CircuitConn) Close() error {
 	return nil
 }
 
-func (c *CircuitConn) LocalID() account.WhiteNoiseID {
+func (c *CircuitConn) LocalID() crypto.WhiteNoiseID {
 	return c.localWhiteNoiseID
 }
 
-func (c *CircuitConn) RemoteID() account.WhiteNoiseID {
+func (c *CircuitConn) RemoteID() crypto.WhiteNoiseID {
 	return c.remoteWhiteNoiseId
 }
 

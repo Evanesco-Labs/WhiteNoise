@@ -15,6 +15,7 @@ import (
 	"whitenoise/common/account"
 	"whitenoise/common/config"
 	"whitenoise/common/log"
+	"whitenoise/crypto"
 	"whitenoise/network"
 )
 
@@ -72,7 +73,10 @@ func NewOneTimeClient(ctx context.Context) (*WhiteNoiseClient, error) {
 		BootStrapPeers:   BootStrapPeers,
 		Mode:             config.ClientMode,
 	}
-	acc := account.NewOneTimeAccount()
+	acc, err := account.NewOneTimeAccount(crypto.Ed25519)
+	if err != nil {
+		return nil, err
+	}
 	node, err := network.NewNode(ctx, &cfg, acc)
 	if err != nil {
 		return nil, err
@@ -146,7 +150,7 @@ func (sdk *WhiteNoiseClient) DisconnectCircuit(sessionID string) error {
 }
 
 func (sdk *WhiteNoiseClient) GetWhiteNoiseID() string {
-	id := sdk.node.NoiseService.Account.GetWhiteNoiseID()
+	id := sdk.node.NoiseService.Account.GetPublicKey().GetWhiteNoiseID()
 	return id.String()
 }
 

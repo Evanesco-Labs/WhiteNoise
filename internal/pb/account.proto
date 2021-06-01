@@ -1,0 +1,8 @@
+syntax = "proto3";
+package pb;
+
+message account {
+  int32 type = 1;
+  bytes privateKey = 2;
+  bytes publicKey = 3;
+}

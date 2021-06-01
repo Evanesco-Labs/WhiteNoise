@@ -20,6 +20,7 @@ import (
 	"whitenoise/common/account"
 	"whitenoise/common/config"
 	"whitenoise/common/log"
+	crypto2 "whitenoise/crypto"
 	"whitenoise/internal/pb"
 	"whitenoise/network/session"
 	"whitenoise/protocol/ack"
@@ -166,7 +167,7 @@ func (service *NoiseService) RegisterProxy(proxyId core.PeerID) error {
 	stream := session.NewStream(streamRaw, service.ctx)
 	newProxy := pb.NewProxy{
 		Time:         time.Hour.String(),
-		WhiteNoiseID: service.Account.GetWhiteNoiseID().String(),
+		WhiteNoiseID: service.Account.GetPublicKey().GetWhiteNoiseID().String(),
 	}
 	data, err := proto.Marshal(&newProxy)
 	if err != nil {
@@ -259,7 +260,7 @@ func (service *NoiseService) NewCircuit(remoteIDString string, sessionId string)
 		}
 	}()
 
-	desWhiteNoiseID, err := account.WhiteNoiseIDfromString(remoteIDString)
+	desWhiteNoiseID, err := crypto2.WhiteNoiseIDfromString(remoteIDString)
 	if err != nil {
 		return err
 	}
@@ -285,7 +286,7 @@ func (service *NoiseService) NewCircuit(remoteIDString string, sessionId string)
 	service.relayManager.AddCircuitConnCaller(sessionId, desWhiteNoiseID)
 
 	newCircuit := pb.NewCircuit{
-		From:      service.Account.GetWhiteNoiseID().Hash(),
+		From:      service.Account.GetPublicKey().GetWhiteNoiseID().Hash(),
 		To:        desWhiteNoiseID.Hash(),
 		SessionId: sessionId,
 	}

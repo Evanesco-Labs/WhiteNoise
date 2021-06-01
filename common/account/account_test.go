@@ -4,77 +4,76 @@ import (
 	"crypto/rand"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/magiconair/properties/assert"
-	"os"
 	"testing"
 	"whitenoise/crypto"
 )
 
-func TestKeyID(t *testing.T) {
-	acc := GetAccount()
-	idOri := acc.GetWhiteNoiseID()
-	id, err := WhiteNoiseIDfromString(idOri.String())
+func TestAccountECDSA(t *testing.T) {
+	acc, err := NewOneTimeAccount(crypto.ECDSA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	idOri := acc.GetPublicKey().GetWhiteNoiseID()
+	id, err := crypto.WhiteNoiseIDfromString(idOri.String())
+	if err != nil {
+		t.Fatal(err)
+	}
 	privP2P := acc.GetP2PPrivKey()
-	privECIES := acc.GetECIESPrivKey()
 	idP2P, err := peer.IDFromPublicKey(privP2P.GetPublic())
 	if err != nil {
 		t.Fatal(err)
 	}
-	idP2P2, err := PeerIDFromWhiteNoiseID(id)
+	idP2P2, err := id.GetPeerID()
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, idP2P.String(), idP2P2.String())
-	pkECIES, err := ECIESPKFromWhiteNoiseID(id)
-	if err != nil {
-		t.Fatal(err)
-	}
+
 	msg := []byte("hello white noise")
 
-	cyphertext, err := crypto.ECIESEncrypt(pkECIES, msg, rand.Reader)
+	cyphertext, err := acc.pubKey.ECIESEncrypt(msg, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	plaintext, err := crypto.ECIESDecrypt(privECIES, cyphertext)
+	plaintext, err := acc.privKey.ECIESDecrypt(cyphertext)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal(t, msg, plaintext)
 }
 
-func Test_GetAccountFromFile(t *testing.T) {
-	r := rand.Reader
-	priv, err := crypto.GenerateECDSAKeyPair(r)
+func TestAccountEd25519(t *testing.T) {
+	acc, err := NewOneTimeAccount(crypto.Ed25519)
 	if err != nil {
 		t.Fatal(err)
 	}
-	pubBytes, err := crypto.MarshallECDSAPublicKey(&priv.PublicKey)
+	idOri := acc.GetPublicKey().GetWhiteNoiseID()
+	id, err := crypto.WhiteNoiseIDfromString(idOri.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	privP2P := acc.GetP2PPrivKey()
+	idP2P, err := peer.IDFromPublicKey(privP2P.GetPublic())
+	if err != nil {
+		t.Fatal(err)
+	}
+	idP2P2, err := id.GetPeerID()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, idP2P.String(), idP2P2.String())
+
+	msg := []byte("hello white noise")
+
+	cyphertext, err := acc.pubKey.ECIESEncrypt(msg, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	privBytes, err := crypto.MarshallECDSAPrivateKey(priv)
+	plaintext, err := acc.privKey.ECIESDecrypt(cyphertext)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	encoded, err := crypto.EncodeEcdsaPriv(priv)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	path := "testaccount.pem"
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = f.WriteString(encoded)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	acc := GetAccountFromFile(path)
-
-	assert.Equal(t, acc.privKey, privBytes)
-	assert.Equal(t, acc.pubKey, pubBytes)
+	assert.Equal(t, msg, plaintext)
 }
