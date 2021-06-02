@@ -15,7 +15,6 @@ import (
 	"whitenoise/common/account"
 	"whitenoise/common/config"
 	"whitenoise/common/log"
-	"whitenoise/crypto"
 	"whitenoise/network"
 )
 
@@ -67,13 +66,13 @@ func NewClient(ctx context.Context, acc *account.Account) (*WhiteNoiseClient, er
 	}, nil
 }
 
-func NewOneTimeClient(ctx context.Context) (*WhiteNoiseClient, error) {
+func NewOneTimeClient(ctx context.Context, keyType int) (*WhiteNoiseClient, error) {
 	cfg := config.NetworkConfig{
 		RendezvousString: "whitenoise",
 		BootStrapPeers:   BootStrapPeers,
 		Mode:             config.ClientMode,
 	}
-	acc, err := account.NewOneTimeAccount(crypto.Ed25519)
+	acc, err := account.NewOneTimeAccount(keyType)
 	if err != nil {
 		return nil, err
 	}

@@ -73,6 +73,12 @@ var (
 		Usage: "Load WhiteNoise account from key file at this path",
 		Value: "",
 	}
+
+	KeyFlag = cli.IntFlag{
+		Name:        "key, k",
+		Usage:       "Set key type",
+		Value:       0,
+	}
 )
 
 func main() {
@@ -98,6 +104,7 @@ func initApp() *cli.App {
 				BootFlag,
 				WhiteListFlag,
 				AccountFromFileFlag,
+				KeyFlag,
 			},
 		},
 
@@ -111,6 +118,7 @@ func initApp() *cli.App {
 				LogLevelFlag,
 				NickFlag,
 				AccountFromFileFlag,
+				KeyFlag,
 			},
 		},
 	}
@@ -124,6 +132,7 @@ func Start(ctx *cli.Context) {
 	bootMode := ctx.Bool("boot")
 	whitelist := ctx.Bool("whitelist")
 	pemPath := ctx.String("account")
+	keyType := ctx.Int("key")
 
 	logLevel := ctx.Int("log")
 	log.InitLog(logLevel, os.Stdout, log.PATH)
@@ -151,8 +160,15 @@ func Start(ctx *cli.Context) {
 	}
 
 	acc := account.GetAccountFromFile(pemPath)
-	if acc == nil {
-		acc = account.GetAccount(crypto.Ed25519)
+	if acc == nil || acc.KeyType != keyType{
+		switch keyType {
+		case crypto.ECDSA:
+			acc = account.GetAccount(crypto.ECDSA)
+		case crypto.Ed25519:
+			acc = account.GetAccount(crypto.Ed25519)
+		default:
+			panic("key type not support")
+		}
 	}
 
 	var err error
@@ -172,12 +188,20 @@ func StartChat(ctx *cli.Context) {
 	con := context.Background()
 	nick := ctx.String("nick")
 	pemPath := ctx.String("account")
+	keyType := ctx.Int("key")
 
 	sdk.BootStrapPeers = bootstrap
 
 	acc := account.GetAccountFromFile(pemPath)
-	if acc == nil {
-		acc = account.GetAccount(crypto.Ed25519)
+	if acc == nil || acc.KeyType != keyType{
+		switch keyType {
+		case crypto.ECDSA:
+			acc = account.GetAccount(crypto.ECDSA)
+		case crypto.Ed25519:
+			acc = account.GetAccount(crypto.Ed25519)
+		default:
+			panic("key type not support")
+		}
 	}
 
 	var err error
