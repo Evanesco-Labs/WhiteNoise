@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/AsynkronIT/protoactor-go v0.0.0-20210305101446-d68990342ece
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef
+	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/flynn/noise v0.0.0-20180327030543-2492fe189ae6
 	github.com/gdamore/tcell/v2 v2.2.1

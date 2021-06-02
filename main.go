@@ -75,9 +75,9 @@ var (
 	}
 
 	KeyFlag = cli.IntFlag{
-		Name:        "key, k",
-		Usage:       "Set key type",
-		Value:       0,
+		Name:  "key, k",
+		Usage: "Set key type",
+		Value: 0,
 	}
 )
 
@@ -160,12 +160,14 @@ func Start(ctx *cli.Context) {
 	}
 
 	acc := account.GetAccountFromFile(pemPath)
-	if acc == nil || acc.KeyType != keyType{
+	if acc == nil || acc.KeyType != keyType {
 		switch keyType {
 		case crypto.ECDSA:
 			acc = account.GetAccount(crypto.ECDSA)
 		case crypto.Ed25519:
 			acc = account.GetAccount(crypto.Ed25519)
+		case crypto.Secpk1:
+			acc = account.GetAccount(crypto.Secpk1)
 		default:
 			panic("key type not support")
 		}
@@ -193,12 +195,14 @@ func StartChat(ctx *cli.Context) {
 	sdk.BootStrapPeers = bootstrap
 
 	acc := account.GetAccountFromFile(pemPath)
-	if acc == nil || acc.KeyType != keyType{
+	if acc == nil || acc.KeyType != keyType {
 		switch keyType {
 		case crypto.ECDSA:
 			acc = account.GetAccount(crypto.ECDSA)
 		case crypto.Ed25519:
 			acc = account.GetAccount(crypto.Ed25519)
+		case crypto.Secpk1:
+			acc = account.GetAccount(crypto.Secpk1)
 		default:
 			panic("key type not support")
 		}

@@ -189,6 +189,20 @@ func (this *LevelDB) QueryAccount(label string) (*Account, error) {
 			pubKey:  publicKey,
 			privKey: privateKey,
 		}, nil
+	case crypto.Secpk1:
+		publicKey, err := crypto.UnMarshallSecp256k1PublicKey(pbAccount.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		privateKey, err := crypto.UnMarshallSecp256k1PrivateKey(pbAccount.PrivateKey)
+		if err != nil {
+			return nil, err
+		}
+		return &Account{
+			KeyType: int(pbAccount.Type),
+			pubKey:  publicKey,
+			privKey: privateKey,
+		}, nil
 	default:
 		return nil, errors.New("unsupport key type")
 	}

@@ -40,6 +40,8 @@ func (id WhiteNoiseID) PublicKey() (PublicKey, error) {
 		return UnMarshallEd25519PublicKey(raw[:MarshallEd25519PublicKeyLength])
 	case ECDSA:
 		return UnMarshallECDSAPublicKey(raw[:MarshallECDSAPublicKeyLength])
+	case Secpk1:
+		return UnMarshallSecp256k1PublicKey(raw[:MarshallSecp256k1PublicKeyLength])
 	default:
 		return nil, errors.New("key type not support")
 	}
@@ -64,6 +66,13 @@ func WhiteNoiseIDFromP2PPK(publicP2P crypto.PubKey) string {
 		return pk.GetWhiteNoiseID().String()
 	case *crypto.ECDSAPublicKey:
 		pk, err := ECDSAPublicKeyFromP2P(publicP2P.(*crypto.ECDSAPublicKey))
+		if err != nil {
+			log.Error(err)
+			return ""
+		}
+		return pk.GetWhiteNoiseID().String()
+	case *crypto.Secp256k1PublicKey:
+		pk, err := SecpPublicKeyFromP2P(publicP2P.(*crypto.Secp256k1PublicKey))
 		if err != nil {
 			log.Error(err)
 			return ""

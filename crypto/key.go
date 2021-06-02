@@ -8,12 +8,14 @@ import (
 )
 
 const (
-	MarshallECDSAPublicKeyLength   = 33
-	MarshallEd25519PublicKeyLength = 32
+	MarshallECDSAPublicKeyLength     = 33
+	MarshallEd25519PublicKeyLength   = 32
+	MarshallSecp256k1PublicKeyLength = 33
 )
 
 const (
 	Ed25519 = iota
+	Secpk1
 	ECDSA
 )
 
@@ -39,6 +41,8 @@ func GenerateKeyPair(keyType int, rand io.Reader) (PrivateKey, PublicKey, error)
 		return GenerateECDSAKeyPair(rand)
 	case Ed25519:
 		return GenerateEd25519KeyPair(rand)
+	case Secpk1:
+		return GenerateSecp256k1KeyPair(rand)
 	default:
 		return nil, nil, errors.New("key type not support")
 	}
