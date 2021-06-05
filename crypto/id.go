@@ -14,21 +14,64 @@ const WhiteNoiseIDLength = 34
 type WhiteNoiseID [WhiteNoiseIDLength]byte
 
 func (id WhiteNoiseID) String() string {
-	return base58.Encode(id[:])
+	prefix := id[0]
+	switch prefix {
+	case Ed25519:
+		pkBytes := id[1 : MarshallEd25519PublicKeyLength+1]
+		return "0" + base58.Encode(pkBytes)
+	case Secpk1:
+		pkBytes := id[1 : MarshallSecp256k1PublicKeyLength+1]
+		return "1" + base58.Encode(pkBytes)
+	case ECDSA:
+		pkBytes := id[1 : MarshallECDSAPublicKeyLength+1]
+		return "2" + base58.Encode(pkBytes)
+	default:
+		log.Error("not support key type")
+		return ""
+	}
 }
 
 func WhiteNoiseIDfromString(s string) (WhiteNoiseID, error) {
 	id := WhiteNoiseID{}
-	raw, err := base58.Decode(s)
-	if err != nil {
-		return id, errors.New("WhiteNoiseIDfromString err: " + err.Error())
+	switch s[0:1] {
+	case "0":
+		pkBytes, err := base58.Decode(s[1:])
+		if err != nil {
+			return [34]byte{}, err
+		}
+		id[0] = Ed25519
+		copy(id[1:], pkBytes)
+	case "1":
+		pkBytes, err := base58.Decode(s[1:])
+		if err != nil {
+			return [34]byte{}, err
+		}
+		id[0] = Secpk1
+		copy(id[1:], pkBytes)
+	case "2":
+		pkBytes, err := base58.Decode(s[1:])
+		if err != nil {
+			return [34]byte{}, err
+		}
+		id[0] = ECDSA
+		copy(id[1:], pkBytes)
+	default:
+		return [34]byte{}, errors.New("not support key type")
 	}
-	copy(id[:], raw)
 	return id, nil
 }
 
 func (id WhiteNoiseID) Hash() string {
-	hash := sha256.Sum256(id[:])
+	hash := [32]byte{}
+	switch id[0] {
+	case Ed25519:
+		hash = sha256.Sum256(id[1 : MarshallEd25519PublicKeyLength+1])
+	case Secpk1:
+		hash = sha256.Sum256(id[1 : MarshallSecp256k1PublicKeyLength+1])
+	case ECDSA:
+		hash = sha256.Sum256(id[1 : MarshallECDSAPublicKeyLength+1])
+	}
+	//hash = sha256.Sum256(id[:])
 	return base58.Encode(hash[:])
 }
 

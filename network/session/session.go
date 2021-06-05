@@ -32,7 +32,7 @@ func NewStream(s network.Stream, parentCtx context.Context) Stream {
 	ctx, cancel := context.WithCancel(parentCtx)
 	return Stream{
 		StreamId:   s.ID(),
-		RW:         msgio.NewReadWriter(s),
+		RW:         msgio.Combine(msgio.NewVarintWriter(s), msgio.NewVarintReader(s)),
 		RemotePeer: s.Conn().RemotePeer(),
 		raw:        s,
 		cancel:     cancel,

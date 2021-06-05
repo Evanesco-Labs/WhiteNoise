@@ -21,7 +21,7 @@ type ChatRoom struct {
 }
 
 // ChatMessage gets converted to/from JSON and sent in the body of pubsub messages.
-type ChatMessage struct {
+type ChatMessageRoom struct {
 	Message    string
 	SenderID   string
 	SenderNick string
@@ -29,7 +29,7 @@ type ChatMessage struct {
 
 // JoinChatRoom tries to subscribe to the PubSub topic for the room name, returning
 // a ChatRoom on success.
-func JoinChatRoom(ctx context.Context, nick string,selfID string, roomName string, wnsdk *sdk.WhiteNoiseClient) (*ChatRoom, error) {
+func JoinChatRoom(ctx context.Context, nick string, selfID string, roomName string, wnsdk *sdk.WhiteNoiseClient) (*ChatRoom, error) {
 	cr := &ChatRoom{
 		ctx:      ctx,
 		self:     selfID,
@@ -59,6 +59,7 @@ func (cr *ChatRoom) readLoop() {
 			continue
 		}
 		msg, err := secure.ReadPayload(conn)
+		log.Debug("get msg:", msg)
 		if err != nil {
 			log.Error("readloop", err)
 			continue

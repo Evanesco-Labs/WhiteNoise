@@ -27,7 +27,7 @@ import (
 	"whitenoise/secure"
 )
 
-const PROXY_PROTOCOL string = "/proxyprotocol"
+const PROXY_PROTOCOL string = "/proxy"
 const ProxySerivceTime time.Duration = time.Hour
 
 type ProxyManager struct {
