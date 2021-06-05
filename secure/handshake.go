@@ -16,7 +16,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 )
 
-const payloadSigPrefix = "whitenoise-static-key:"
+const payloadSigPrefix = "noise-libp2p-static-key:"
 
 var cipherSuite = noise.NewCipherSuite(noise.DH25519, noise.CipherChaChaPoly, noise.HashSHA256)
 

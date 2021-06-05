@@ -74,10 +74,10 @@ var (
 		Value: "",
 	}
 
-	KeyFlag = cli.IntFlag{
-		Name:  "key, k",
+	KeyFlag = cli.StringFlag{
+		Name:  "keytype, ktype",
 		Usage: "Set key type",
-		Value: 0,
+		Value: "ed25519",
 	}
 )
 
@@ -132,7 +132,20 @@ func Start(ctx *cli.Context) {
 	bootMode := ctx.Bool("boot")
 	whitelist := ctx.Bool("whitelist")
 	pemPath := ctx.String("account")
-	keyType := ctx.Int("key")
+	keyTypeStr := ctx.String("keytype")
+
+	//decode keytype
+	keyType := 0
+	switch keyTypeStr {
+	case "ed25519":
+		keyType = crypto.Ed25519
+	case "secp256k1":
+		keyType = crypto.Secpk1
+	case "ecdsa":
+		keyType = crypto.ECDSA
+	default:
+		keyType = crypto.Ed25519
+	}
 
 	logLevel := ctx.Int("log")
 	log.InitLog(logLevel, os.Stdout, log.PATH)
@@ -190,7 +203,20 @@ func StartChat(ctx *cli.Context) {
 	con := context.Background()
 	nick := ctx.String("nick")
 	pemPath := ctx.String("account")
-	keyType := ctx.Int("key")
+	keyTypeStr := ctx.String("keytype")
+
+	//decode keytype
+	keyType := 0
+	switch keyTypeStr {
+	case "ed25519":
+		keyType = crypto.Ed25519
+	case "secp256k1":
+		keyType = crypto.Secpk1
+	case "ecdsa":
+		keyType = crypto.ECDSA
+	default:
+		keyType = crypto.Ed25519
+	}
 
 	sdk.BootStrapPeers = bootstrap
 
@@ -229,7 +255,7 @@ func StartChat(ctx *cli.Context) {
 	if err != nil {
 		panic(err)
 	}
-
+	time.Sleep(time.Millisecond * 100)
 	if n != "" {
 		_, sessionID, err := wnSDK.Dial(n)
 		if err != nil {

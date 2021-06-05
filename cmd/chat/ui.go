@@ -1,14 +1,14 @@
 package chat
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
+	"github.com/golang/protobuf/proto"
 	"github.com/rivo/tview"
 	"io"
 	"strings"
 	"time"
-	"whitenoise/cmd/chat/pb"
+	"whitenoise/cmd/pb"
 	"whitenoise/sdk"
 	"whitenoise/secure"
 )
@@ -160,11 +160,11 @@ func (ui *ChatUI) handleEvents() {
 	for {
 		select {
 		case input := <-ui.inputCh:
-			chatMsg, _ := json.Marshal(
-				pb.ChatMessage{
-					PeerID: ui.cr.nick,
-					Data:   []byte(input),
-				})
+			msg := pb.ChatMessage{
+				PeerID: ui.cr.nick,
+				Data:   []byte(input),
+			}
+			chatMsg, _ := proto.Marshal(&msg)
 			//ui.service.NoiseService.Relay().SendRelay(ui.cr.roomName, relay.NewRelayMsg(chatMsg, ui.cr.roomName))
 			conn, ok := ui.service.GetCircuit(ui.cr.roomName)
 			if !ok {
@@ -176,8 +176,8 @@ func (ui *ChatUI) handleEvents() {
 
 		case m := <-ui.cr.Messages:
 			// when we receive a message from the chat room, print it to the message window
-			chatMsg := new(pb.ChatMessage)
-			err := json.Unmarshal(*m, chatMsg)
+			chatMsg := pb.ChatMessage{}
+			err := proto.Unmarshal(*m, &chatMsg)
 			if err == nil {
 				var isSave bool
 				for _, p := range ui.cr.PeerList {
@@ -190,7 +190,7 @@ func (ui *ChatUI) handleEvents() {
 					ui.cr.PeerList = append(ui.cr.PeerList, chatMsg.PeerID)
 				}
 
-				ui.displayChatMessage(chatMsg)
+				ui.displayChatMessage(&chatMsg)
 			}
 
 		case <-peerRefreshTicker.C:

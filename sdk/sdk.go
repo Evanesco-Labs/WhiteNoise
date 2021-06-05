@@ -89,7 +89,7 @@ func NewOneTimeClient(ctx context.Context, keyType int) (*WhiteNoiseClient, erro
 
 func (sdk *WhiteNoiseClient) GetMainNetPeers(cnt int) ([]peer.ID, error) {
 	peerInfos, err := sdk.node.NoiseService.GetMainnetPeers(cnt)
-	log.Debugf("%v", peerInfos)
+	log.Debugf("MainNet peers: ", peerInfos)
 	if err != nil {
 		return nil, err
 	}
