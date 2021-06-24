@@ -6,8 +6,8 @@ import (
 	"github.com/asaskevich/EventBus"
 	"github.com/magiconair/properties/assert"
 	"testing"
-	"whitenoise/common"
-	"whitenoise/secure"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/secure"
 )
 
 func TestCircuitConn(t *testing.T) {

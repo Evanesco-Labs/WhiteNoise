@@ -2,7 +2,7 @@ package gossip
 
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"
-	"whitenoise/internal/actorMsg"
+	"github.com/Evanesco-Labs/WhiteNoise/internal/actorMsg"
 )
 
 func (service *DHTService) Receive(ctx actor.Context) {

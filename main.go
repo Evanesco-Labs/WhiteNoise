@@ -3,6 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/Evanesco-Labs/WhiteNoise/cmd/chat"
+	"github.com/Evanesco-Labs/WhiteNoise/common/account"
+	"github.com/Evanesco-Labs/WhiteNoise/common/config"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/crypto"
+	"github.com/Evanesco-Labs/WhiteNoise/network"
+	"github.com/Evanesco-Labs/WhiteNoise/sdk"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
@@ -12,13 +19,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"whitenoise/cmd/chat"
-	"whitenoise/common/account"
-	"whitenoise/common/config"
-	"whitenoise/common/log"
-	"whitenoise/crypto"
-	"whitenoise/network"
-	"whitenoise/sdk"
 )
 
 var node *network.Node

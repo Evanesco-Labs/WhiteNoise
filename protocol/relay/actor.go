@@ -2,10 +2,10 @@ package relay
 
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/network/session"
 	core "github.com/libp2p/go-libp2p-core"
-	"whitenoise/common"
-	"whitenoise/common/log"
-	"whitenoise/network/session"
 )
 
 type ReqGetSession struct {

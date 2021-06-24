@@ -2,10 +2,10 @@ package chat
 
 import (
 	"context"
-	"whitenoise/common/log"
-	"whitenoise/protocol/relay"
-	"whitenoise/sdk"
-	"whitenoise/secure"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/protocol/relay"
+	"github.com/Evanesco-Labs/WhiteNoise/sdk"
+	"github.com/Evanesco-Labs/WhiteNoise/secure"
 )
 
 type ChatRoom struct {

@@ -3,8 +3,8 @@ package chat
 import (
 	"context"
 	"fmt"
+	"github.com/Evanesco-Labs/WhiteNoise/sdk"
 	"os"
-	"whitenoise/sdk"
 )
 
 func Chat(nick, id, room string, sdk *sdk.WhiteNoiseClient) {

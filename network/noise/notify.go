@@ -6,11 +6,11 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/multiformats/go-multiaddr"
 	"time"
-	"whitenoise/common"
-	"whitenoise/common/config"
-	"whitenoise/common/log"
-	"whitenoise/protocol/proxy"
-	"whitenoise/protocol/relay"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/common/config"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/protocol/proxy"
+	"github.com/Evanesco-Labs/WhiteNoise/protocol/relay"
 )
 
 type NoiseNotifiee struct {

@@ -2,8 +2,8 @@ package gossip
 
 import (
 	"google.golang.org/protobuf/proto"
-	"whitenoise/common/log"
-	"whitenoise/internal/pb"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/internal/pb"
 )
 
 func (service *DHTService) GossipJoint(desHash string, negCypher []byte) error {

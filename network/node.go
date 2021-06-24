@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"github.com/AsynkronIT/protoactor-go/actor"
+	"github.com/Evanesco-Labs/WhiteNoise/common/account"
+	"github.com/Evanesco-Labs/WhiteNoise/common/config"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/network/gossip"
+	"github.com/Evanesco-Labs/WhiteNoise/network/host"
+	"github.com/Evanesco-Labs/WhiteNoise/network/noise"
 	core "github.com/libp2p/go-libp2p-core"
-	"whitenoise/common/account"
-	"whitenoise/common/config"
-	"whitenoise/common/log"
-	"whitenoise/network/gossip"
-	"whitenoise/network/host"
-	"whitenoise/network/noise"
 )
 
 type Node struct {

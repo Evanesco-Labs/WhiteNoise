@@ -8,9 +8,9 @@ import (
 	core "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/network"
 	"sync"
-	"whitenoise/common/log"
-	"whitenoise/internal/pb"
-	"whitenoise/network/session"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/internal/pb"
+	"github.com/Evanesco-Labs/WhiteNoise/network/session"
 )
 
 const ACK_PROTOCOL string = "/ack"

@@ -3,8 +3,8 @@ package ack
 import (
 	"github.com/AsynkronIT/protoactor-go/actor"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"whitenoise/common/log"
-	"whitenoise/internal/pb"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/internal/pb"
 )
 
 type ReqAck struct {

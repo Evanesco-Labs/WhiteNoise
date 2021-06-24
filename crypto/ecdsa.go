@@ -11,7 +11,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	nc "github.com/nspcc-dev/neofs-crypto"
 	"io"
-	"whitenoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
 )
 
 //todo:add more curve choices

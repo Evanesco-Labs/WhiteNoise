@@ -7,8 +7,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"sync"
 	"time"
-	"whitenoise/common"
-	crypto2 "whitenoise/crypto"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	crypto2 "github.com/Evanesco-Labs/WhiteNoise/crypto"
 )
 
 type InsecureConn interface {
