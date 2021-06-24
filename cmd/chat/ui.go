@@ -2,15 +2,15 @@ package chat
 
 import (
 	"fmt"
+	"github.com/Evanesco-Labs/WhiteNoise/cmd/pb"
+	"github.com/Evanesco-Labs/WhiteNoise/sdk"
+	"github.com/Evanesco-Labs/WhiteNoise/secure"
 	"github.com/gdamore/tcell/v2"
 	"github.com/golang/protobuf/proto"
 	"github.com/rivo/tview"
 	"io"
 	"strings"
 	"time"
-	"whitenoise/cmd/pb"
-	"whitenoise/sdk"
-	"whitenoise/secure"
 )
 
 // ChatUI is a Text User Interface (TUI) for a ChatRoom.

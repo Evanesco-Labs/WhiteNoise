@@ -9,8 +9,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	pool "github.com/libp2p/go-buffer-pool"
 	"golang.org/x/crypto/poly1305"
-	"whitenoise/common/log"
-	"whitenoise/internal/pb"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/internal/pb"
 
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"

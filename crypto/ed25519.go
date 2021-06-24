@@ -3,13 +3,13 @@ package crypto
 import (
 	"crypto/sha512"
 	"errors"
+	"go.dedis.ch/kyber/v3"
+	"go.dedis.ch/kyber/v3/encrypt/ecies"
+	"go.dedis.ch/kyber/v3/group/edwards25519"
 	"github.com/gogo/protobuf/proto"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	pb "github.com/libp2p/go-libp2p-core/crypto/pb"
 	"github.com/libp2p/go-libp2p-core/peer"
-	"go.dedis.ch/kyber/v3"
-	"go.dedis.ch/kyber/v3/encrypt/ecies"
-	"go.dedis.ch/kyber/v3/group/edwards25519"
 	"golang.org/x/crypto/ed25519"
 	"io"
 )

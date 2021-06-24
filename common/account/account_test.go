@@ -5,7 +5,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/magiconair/properties/assert"
 	"testing"
-	"whitenoise/crypto"
+	"github.com/Evanesco-Labs/WhiteNoise/crypto"
 )
 
 func TestAccountECDSA(t *testing.T) {

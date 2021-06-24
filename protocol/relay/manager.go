@@ -11,14 +11,14 @@ import (
 	"github.com/libp2p/go-libp2p-core/protocol"
 	"sync"
 	"time"
-	"whitenoise/common"
-	"whitenoise/common/account"
-	"whitenoise/common/config"
-	"whitenoise/common/log"
-	crypto2 "whitenoise/crypto"
-	"whitenoise/network/session"
-	"whitenoise/protocol/ack"
-	"whitenoise/secure"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/common/account"
+	"github.com/Evanesco-Labs/WhiteNoise/common/config"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	crypto2 "github.com/Evanesco-Labs/WhiteNoise/crypto"
+	"github.com/Evanesco-Labs/WhiteNoise/network/session"
+	"github.com/Evanesco-Labs/WhiteNoise/protocol/ack"
+	"github.com/Evanesco-Labs/WhiteNoise/secure"
 )
 
 type RelayMsg []byte

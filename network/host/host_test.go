@@ -2,13 +2,13 @@ package host
 
 import (
 	"context"
+	"github.com/Evanesco-Labs/WhiteNoise/common/account"
+	"github.com/Evanesco-Labs/WhiteNoise/common/config"
 	"testing"
-	"whitenoise/common/account"
-	"whitenoise/common/config"
 )
 
 func TestNewHost(t *testing.T) {
-	acc := account.GetAccount()
+	acc := account.GetAccount(1)
 	priv := acc.GetP2PPrivKey()
 	cfg := config.NetworkConfig{
 		RendezvousString: "whitenoise",

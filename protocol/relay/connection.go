@@ -7,9 +7,9 @@ import (
 	"io"
 	"sync"
 	"time"
-	"whitenoise/common"
-	"whitenoise/common/log"
-	"whitenoise/crypto"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/crypto"
 )
 
 type CircuitConnState int

@@ -6,7 +6,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/mr-tron/base58"
-	"whitenoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
 )
 
 const WhiteNoiseIDLength = 34

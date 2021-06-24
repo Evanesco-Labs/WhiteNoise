@@ -3,16 +3,16 @@ package account
 import (
 	"crypto/rand"
 	"errors"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/crypto"
+	"github.com/Evanesco-Labs/WhiteNoise/internal/pb"
 	"github.com/golang/protobuf/proto"
 	crypto2 "github.com/libp2p/go-libp2p-core/crypto"
 	"io/ioutil"
 	"os"
-	"whitenoise/common/log"
-	"whitenoise/crypto"
-	"whitenoise/internal/pb"
 
+	"github.com/Evanesco-Labs/WhiteNoise/common/store"
 	"github.com/syndtr/goleveldb/leveldb"
-	"whitenoise/common/store"
 )
 
 const DB_DIR = "./db"

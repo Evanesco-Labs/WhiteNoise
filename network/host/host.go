@@ -10,8 +10,8 @@ import (
 	kaddht "github.com/libp2p/go-libp2p-kad-dht"
 	noise "github.com/libp2p/go-libp2p-noise"
 	"github.com/multiformats/go-multiaddr"
-	"whitenoise/common/config"
-	"whitenoise/common/log"
+	"github.com/Evanesco-Labs/WhiteNoise/common/config"
+	"github.com/Evanesco-Labs/WhiteNoise/common/log"
 )
 
 func NewHost(ctx context.Context, cfg *config.NetworkConfig, priv crypto.PrivKey) (host.Host, *kaddht.IpfsDHT, error) {

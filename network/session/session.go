@@ -6,7 +6,7 @@ import (
 	core "github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-msgio"
-	"whitenoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
 )
 
 const SessionIdNon string = "SessionIDNon"

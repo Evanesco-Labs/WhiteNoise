@@ -1,8 +1,8 @@
 package relay
 
 import (
-	"whitenoise/common"
-	"whitenoise/secure"
+	"github.com/Evanesco-Labs/WhiteNoise/common"
+	"github.com/Evanesco-Labs/WhiteNoise/secure"
 )
 
 func (manager *RelayMsgManager) NewSecureConnCaller(conn *CircuitConn) error {

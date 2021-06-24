@@ -1,9 +1,10 @@
-module whitenoise
+module github.com/Evanesco-Labs/WhiteNoise
 
 go 1.14
 
 require (
 	github.com/AsynkronIT/protoactor-go v0.0.0-20210305101446-d68990342ece
+	//github.com/Evanesco-Labs/kyber v0.0.0-20210624090903-1001bc29e5a9
 	github.com/asaskevich/EventBus v0.0.0-20200907212545-49d423059eef
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.25
@@ -32,4 +33,4 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 )
 
-replace go.dedis.ch/kyber/v3 => /Users/houmy/Documents/GoPro/src/github.com/dedis/kyber
+replace go.dedis.ch/kyber/v3 v3.0.9 => github.com/Evanesco-Labs/kyber v0.0.0-20210624090903-1001bc29e5a9
