@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/Evanesco-Labs/go-evanesco/crypto/ecies"
 	"github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	nc "github.com/nspcc-dev/neofs-crypto"
